@@ -21,7 +21,9 @@ class MyApp extends StatelessWidget {
       value: AuthService().user,
       initialData: null,
       child: MaterialApp(
-        color: ColorConstants.kPrimaryColor,
+        theme: ThemeData(
+            primaryColor: ColorConstants.kPrimaryColor,
+            accentColor: ColorConstants.kPrimaryColor),
         title: "Catch-22",
         home: Wrapper(),
       ),

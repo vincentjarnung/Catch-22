@@ -1,7 +1,6 @@
 import 'package:catch22_flutter/screens/home/competition.dart';
 import 'package:catch22_flutter/screens/home/home.dart';
 import 'package:catch22_flutter/screens/home/profile.dart';
-import 'package:catch22_flutter/shared/constants/color_constants.dart';
 import 'package:flutter/material.dart';
 
 class BottomNavBar extends StatefulWidget {
@@ -35,8 +34,6 @@ class _BottomNavBarState extends State<BottomNavBar> {
               icon: Icon(Icons.people_outline), label: 'Competitions'),
         ],
         currentIndex: selIndex,
-        unselectedItemColor: ColorConstants.kSecoundaryColor,
-        fixedColor: ColorConstants.kPrimaryColor,
         onTap: onItemTapped,
       ),
     );

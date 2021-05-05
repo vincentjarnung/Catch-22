@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 class Competition extends StatefulWidget {
   @override
@@ -8,6 +9,6 @@ class Competition extends StatefulWidget {
 class _CompetitionState extends State<Competition> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold();
   }
 }

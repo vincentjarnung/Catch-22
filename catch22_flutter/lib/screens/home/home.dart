@@ -1,6 +1,9 @@
 import 'package:catch22_flutter/charts/steps_chart.dart';
 import 'package:catch22_flutter/models/steps_day.dart';
+import 'package:catch22_flutter/shared/constants/color_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:syncfusion_flutter_gauges/gauges.dart';
+import 'dart:async';
 
 class Home extends StatefulWidget {
   @override
@@ -23,10 +26,43 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(10.0),
+        padding: const EdgeInsets.all(90.0),
         child: Center(
-            child: StepsChart(
-          data: data,
+            child: Column(
+          children: [
+            SfRadialGauge(
+              axes: <RadialAxis>[
+                RadialAxis(
+                    minimum: 0,
+                    maximum: 8000,
+                    showLabels: false,
+                    showTicks: false,
+                    axisLineStyle: AxisLineStyle(
+                      thickness: 0.2,
+                      cornerStyle: CornerStyle.bothCurve,
+                      color: Color.fromARGB(100, 244, 194, 80),
+                      thicknessUnit: GaugeSizeUnit.factor,
+                    ),
+                    annotations: <GaugeAnnotation>[
+                      GaugeAnnotation(
+                          positionFactor: 0.1,
+                          angle: 90,
+                          widget: Text(
+                            7000.toStringAsFixed(0) + ' / 10000 steps',
+                            style: TextStyle(fontSize: 15),
+                          ))
+                    ],
+                    pointers: <GaugePointer>[
+                      RangePointer(
+                          value: 7000,
+                          cornerStyle: CornerStyle.bothCurve,
+                          width: 0.2,
+                          sizeUnit: GaugeSizeUnit.factor,
+                          color: ColorConstants.kPrimaryColor),
+                    ]),
+              ],
+            )
+          ],
         )),
       ),
     );

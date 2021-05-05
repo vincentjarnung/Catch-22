@@ -10,10 +10,11 @@ class StepsChart extends StatelessWidget {
   Widget build(BuildContext context) {
     List<charts.Series<StepsDayModel, String>> series = [
       charts.Series(
-          id: "Steps",
-          data: data,
-          domainFn: (StepsDayModel series, _) => series.date,
-          measureFn: (StepsDayModel series, _) => series.steps)
+        id: "Steps",
+        data: data,
+        domainFn: (StepsDayModel series, _) => series.date,
+        measureFn: (StepsDayModel series, _) => series.steps,
+      )
       //colorFn: (StepsDayModel series, _) => ColorConstants.kPrimaryColor,
     ];
     return charts.BarChart(
