@@ -19,7 +19,7 @@ class DatabaseService {
         .update({'stepGoal': stepGoal});
   }
 
-  Stream<DocumentSnapshot> get tools {
+  Stream<DocumentSnapshot> get user {
     return FirebaseFirestore.instance
         .collection('users')
         .doc(_auth.getCurrentUser())

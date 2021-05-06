@@ -51,6 +51,7 @@ class _HomeState extends State<Home> {
 
   void initState() {
     super.initState();
+    _test();
     _getDate();
   }
 
@@ -186,12 +187,23 @@ class _HomeState extends State<Home> {
     }
   }
 
+  void _test() {
+    String firebaseUser = _auth.getCurrentUser();
+    FirebaseFirestore.instance.collection('users').doc(firebaseUser).get().then(
+        (value) => print(value.data()['stepGoal'].toString() + 'LOOOK HERE'));
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-        stream: _db.tools,
+        stream: _db.user,
         builder: (context, snapshot) {
-          if (snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || !snapshot.data.exists) {
+            return Center(child: CircularProgressIndicator());
+          } else {
             var userDoc = snapshot.data;
             stepGoal = userDoc['stepGoal'];
             return Scaffold(
@@ -298,48 +310,6 @@ class _HomeState extends State<Home> {
                         ],
                       ),
                     ),
-
-                    /*SfRadialGauge(
-              axes: <RadialAxis>[
-                RadialAxis(
-                    minimum: 0,
-                    maximum: 10000,
-                    showLabels: false,
-                    showTicks: false,
-                    axisLineStyle: AxisLineStyle(
-                      thickness: 0.2,
-                      cornerStyle: CornerStyle.bothCurve,
-                      color: Colors.grey[260],
-                      thicknessUnit: GaugeSizeUnit.factor,
-                    ),
-                    annotations: <GaugeAnnotation>[
-                      GaugeAnnotation(
-                          positionFactor: 0.1,
-                          angle: 90,
-                          widget: Text(
-                            hasData
-                                ? steps.toStringAsFixed(0) + ' / 10000 steps'
-                                : 'No steps for this date',
-                            style: TextStyle(fontSize: 15),
-                          ))
-                    ],
-                    pointers: <GaugePointer>[
-                      RangePointer(
-                        value: hasData ? steps : 0,
-                        cornerStyle: CornerStyle.bothCurve,
-                        width: 0.2,
-                        sizeUnit: GaugeSizeUnit.factor,
-                        gradient: SweepGradient(colors: <Color>[
-                          Colors.yellow[500],
-                          ColorConstants.kPrimaryColor
-                        ], stops: <double>[
-                          0.25,
-                          0.75
-                        ]),
-                      ),
-                    ]),
-              ],
-            ),*/
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -381,7 +351,6 @@ class _HomeState extends State<Home> {
                   ],
                 )));
           }
-          return CircularProgressIndicator();
         });
   }
 }
