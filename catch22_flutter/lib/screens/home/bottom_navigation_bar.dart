@@ -29,7 +29,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined), label: 'Home'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline), label: 'Profile'),
+              icon: Icon(Icons.military_tech_outlined), label: 'Trophies'),
           BottomNavigationBarItem(
               icon: Icon(Icons.people_outline), label: 'Competitions'),
         ],

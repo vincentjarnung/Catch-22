@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 
 class StepsDayModel {
   final String date;
-  final int steps;
+  final double steps;
 
   StepsDayModel({@required this.date, @required this.steps});
 }

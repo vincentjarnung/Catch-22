@@ -19,6 +19,23 @@ class _RegisterState extends State<Register> {
   String password = '';
   String userName = '';
   String error = '';
+  int stepGoal = 7500;
+
+  void initState() {
+    super.initState();
+  }
+
+  void _addSteps() {
+    setState(() {
+      stepGoal += 500;
+    });
+  }
+
+  void _minusSteps() {
+    setState(() {
+      stepGoal -= 500;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +57,7 @@ class _RegisterState extends State<Register> {
                         fontWeight: FontWeight.bold),
                   )),
                   SizedBox(
-                    height: 140,
+                    height: 100,
                   ),
                   TextFieldWidget(
                       isLast: false,
@@ -82,14 +99,33 @@ class _RegisterState extends State<Register> {
                         setState(() => password = val);
                       }),
                   Padding(
-                    padding: const EdgeInsets.all(18.0),
+                    padding: const EdgeInsets.fromLTRB(18.0, 18, 18, 5),
                     child: Text(
                       error,
                       style: TextStyle(color: Colors.red, fontSize: 14.0),
                     ),
                   ),
+                  Text('Set Step Goal (This can be changed later)'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                          icon: Icon(Icons.remove),
+                          onPressed: () {
+                            _minusSteps();
+                          }),
+                      Text(stepGoal.toString(),
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 20)),
+                      IconButton(
+                          icon: Icon(Icons.add),
+                          onPressed: () {
+                            _addSteps();
+                          }),
+                    ],
+                  ),
                   SizedBox(
-                    height: 10,
+                    height: 20,
                   ),
                   ButtonWidget(
                     text: "Register",
@@ -101,6 +137,7 @@ class _RegisterState extends State<Register> {
                           userName.trimRight(),
                           email.trimRight(),
                           password.trimRight(),
+                          stepGoal,
                         );
 
                         // TODO: Add different error based on result

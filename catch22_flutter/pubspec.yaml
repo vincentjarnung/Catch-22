@@ -34,6 +34,7 @@ dependencies:
   cloud_firestore: ^1.0.7
   charts_flutter: ^0.10.0
   syncfusion_flutter_gauges: ^19.1.59
+  intl: ^0.17.0
   
 
 dev_dependencies:
@@ -50,7 +51,8 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-
+  assets:
+    - assets/images/
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
