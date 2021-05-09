@@ -9,7 +9,11 @@ class ButtonWidget extends StatelessWidget {
   final double height;
 
   ButtonWidget(
-      {this.hasBorder, this.text, this.onClick, this.width, this.height});
+      {@required this.hasBorder,
+      this.text,
+      this.onClick,
+      this.width,
+      this.height});
 
   @override
   Widget build(BuildContext context) {

@@ -21,14 +21,20 @@ class DatabaseService {
         .update({'stepGoal': stepGoal});
   }
 
+  Future addActivity(String date, int steps) async {
+    return await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_auth.getCurrentUser())
+        .collection('steps')
+        .doc(date)
+        .update({'steps': FieldValue.increment(steps)});
+  }
+
   Future setSteps() async {
     for (int i = 1; i < 32; i++) {
       String day;
-      int stepGen;
       Random random = new Random();
-      int randNum = random.nextInt(10) + 5; // from 10 upto 99 included
-
-      stepGen = randNum * 1000;
+      int randNum = random.nextInt(5000) + 5000; // from 10 upto 99 included
 
       if (i < 10) {
         day = '0' + i.toString();
@@ -41,7 +47,7 @@ class DatabaseService {
             .doc(_auth.getCurrentUser())
             .collection('steps')
             .doc('2021-05-' + day)
-            .set({'steps': stepGen})
+            .set({'steps': randNum})
             .then((value) => print('Data Added'))
             .catchError((error) => (print('Error: ' + error)));
       });

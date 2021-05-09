@@ -1,5 +1,6 @@
 import 'package:catch22_flutter/charts/steps_chart.dart';
 import 'package:catch22_flutter/models/steps_day.dart';
+import 'package:catch22_flutter/screens/home/add_activity.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/back_img_button_widget.dart';
 import 'package:catch22_flutter/shared/change_date_widget.dart';
@@ -52,6 +53,7 @@ class _HomeState extends State<Home> {
 
   void initState() {
     super.initState();
+    //_db.setSteps();
     _getDateAndSteps();
     _getStepGoal();
   }
@@ -190,17 +192,32 @@ class _HomeState extends State<Home> {
     });
   }
 
-  void _lastWeekData(List<StepsDayModel> data) {
-    for (int i = 1; i < tester.length; i++) {}
+  void _lastWeekData(List<StepsDayModel> data, DateTime date) {
+    print(tester.toString() + ' 2 2');
+    for (int i = 1; i < tester.length; i++) {
+      if (tester[i].date == formatter.format(DateTime.now())) {
+        print(tester[i].date);
+        for (int n = 6; n >= 0; n--) {
+          DateTime days = DateTime(date.year, date.month, date.day - n);
+          String dayOfWeek = DateFormat('EEEE').format(days);
+          String dayShort = dayOfWeek.substring(0, 3);
+          displaySteps
+              .add(StepsDayModel(date: dayShort, steps: data[i - n].steps));
+        }
+        break;
+      }
+    }
+    print(displaySteps.toString() + ' 22');
   }
 
   @override
   Widget build(BuildContext context) {
+    _lastWeekData(tester, DateTime.now());
     return Scaffold(
         appBar: AppBar(
-          title: Center(
-            child: Text('Home'),
-          ),
+          leading: Container(),
+          title: Text('Home'),
+          centerTitle: true,
           actions: <Widget>[
             PopupMenuButton(
                 onSelected: (item) => _onSelected(context, item, stepGoal),
@@ -297,7 +314,9 @@ class _HomeState extends State<Home> {
               ),
             ),
             ChangeDateWidget(
-                txt: formatter.format(cDate),
+                txt: formatter.format(cDate) == formatter.format(DateTime.now())
+                    ? 'Today'
+                    : formatter.format(cDate),
                 addColor:
                     formatter.format(cDate) == formatter.format(DateTime.now())
                         ? Colors.grey
@@ -319,7 +338,11 @@ class _HomeState extends State<Home> {
             ImageButtonWidget(
               icon: Icon(Icons.add),
               text: 'Add Activity',
-              onClick: () {},
+              onClick: () {
+                print('Goin Next');
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => AddActivity()));
+              },
               width: 200,
               height: 50,
             ),
@@ -328,9 +351,7 @@ class _HomeState extends State<Home> {
               child: Container(
                 width: 500,
                 height: 300,
-                child: StepsChart(
-                  data: tester,
-                ),
+                child: StepsChart(data: displaySteps),
               ),
             ),
           ],

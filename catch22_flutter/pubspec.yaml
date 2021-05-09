@@ -35,6 +35,7 @@ dependencies:
   charts_flutter: ^0.10.0
   syncfusion_flutter_gauges: ^19.1.59
   intl: ^0.17.0
+  flutter_date_pickers: ^0.2.4
   
 
 dev_dependencies:
