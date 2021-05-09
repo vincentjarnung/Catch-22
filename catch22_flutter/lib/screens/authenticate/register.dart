@@ -1,4 +1,5 @@
-import 'package:catch22_flutter/screens/wrapper.dart';
+import 'package:catch22_flutter/screens/authenticate/get_steps.dart';
+import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/button_widget.dart';
 import 'package:catch22_flutter/shared/form_textfield_widget.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
+  final DatabaseService _db = DatabaseService();
   final AuthService _auth = AuthService();
   final _formKey = GlobalKey<FormState>();
   bool loading = false;
@@ -139,7 +141,7 @@ class _RegisterState extends State<Register> {
                           password.trimRight(),
                           stepGoal,
                         );
-
+                        _db.setSteps();
                         // TODO: Add different error based on result
 
                         if (result == null) {
@@ -148,10 +150,11 @@ class _RegisterState extends State<Register> {
                             loading = false;
                           });
                         } else {
-                          Navigator.pushReplacement(
+                          print('Trolololololol');
+                          /*Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) => Wrapper()));
+                                  builder: (context) => SignIn()));*/
                         }
                       }
                     },
@@ -163,7 +166,7 @@ class _RegisterState extends State<Register> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text("Already have an acount?"),
-                      FlatButton(
+                      TextButton(
                           onPressed: () {
                             Navigator.pushReplacement(
                                 context,

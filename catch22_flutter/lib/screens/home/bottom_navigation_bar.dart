@@ -1,6 +1,9 @@
+import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:catch22_flutter/screens/home/competition.dart';
 import 'package:catch22_flutter/screens/home/home.dart';
 import 'package:catch22_flutter/screens/home/profile.dart';
+import 'package:catch22_flutter/services/database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class BottomNavBar extends StatefulWidget {
@@ -9,7 +12,13 @@ class BottomNavBar extends StatefulWidget {
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
-  int selIndex = 0;
+  int selIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    selIndex = 0;
+  }
 
   void onItemTapped(int index) {
     setState(() {

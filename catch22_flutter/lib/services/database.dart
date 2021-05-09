@@ -5,6 +5,7 @@ import 'dart:math';
 
 class DatabaseService {
   AuthService _auth = AuthService();
+
   Future newUserData(
       String userName, String email, String uid, int stepGoal) async {
     return await FirebaseFirestore.instance.collection('users').doc(uid).set({

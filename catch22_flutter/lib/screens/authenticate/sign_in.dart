@@ -1,3 +1,4 @@
+import 'package:catch22_flutter/screens/authenticate/get_steps.dart';
 import 'package:catch22_flutter/screens/authenticate/register.dart';
 import 'package:catch22_flutter/screens/wrapper.dart';
 import 'package:catch22_flutter/services/auth.dart';
@@ -94,6 +95,7 @@ class _SignInState extends State<SignIn> {
                             loading = false;
                           });
                         } else {
+                          print('trolololol');
                           Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
@@ -106,7 +108,7 @@ class _SignInState extends State<SignIn> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text("Don't have an account?"),
-                      FlatButton(
+                      TextButton(
                           onPressed: () {
                             Navigator.pushReplacement(
                                 context,

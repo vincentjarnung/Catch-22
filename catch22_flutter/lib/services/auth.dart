@@ -32,11 +32,6 @@ class AuthService {
     return user != null ? SimpleUser(uid: user.uid) : null;
   }
 
-  String _getCurrentUser() {
-    User fUser = _auth.currentUser;
-    return fUser.uid;
-  }
-
   //Register
   Future createUser(
       String userName, String email, String password, int stepGoal) async {

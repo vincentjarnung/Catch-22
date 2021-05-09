@@ -100,7 +100,10 @@ class _AddActivityState extends State<AddActivity> {
                     height: 30,
                     width: 100,
                     onClick: () {
-                      Navigator.pushReplacement(
+                      _db.addActivity(
+                          DateFormat('yyyy-MM-dd').format(_selectedDate),
+                          _selSportValue);
+                      Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => BottomNavBar()));

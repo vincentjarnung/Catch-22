@@ -19,32 +19,12 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   DatabaseService _db = DatabaseService();
 
-  final List<StepsDayModel> data = [
-    StepsDayModel(date: "2021-05-01", steps: 7600),
-    StepsDayModel(date: "2021-05-02", steps: 7000),
-    StepsDayModel(date: "2021-05-03", steps: 8000),
-    StepsDayModel(date: "2021-05-04", steps: 8200),
-    StepsDayModel(date: "2021-05-05", steps: 7600),
-    StepsDayModel(date: "2021-05-06", steps: 7000),
-    StepsDayModel(date: "2021-05-07", steps: 8000),
-    StepsDayModel(date: "2021-05-08", steps: 8200),
-  ];
   double steps;
   int stepGoal;
   String errorTxt = '';
   DateTime cDate = DateTime.now();
   bool hasData = false;
   StateSetter _setter;
-  List<StepsDayModel> chartData = [
-    StepsDayModel(date: 'mon', steps: 7600),
-    StepsDayModel(date: "tue", steps: 7000),
-    StepsDayModel(date: "wed", steps: 8000),
-    StepsDayModel(date: "thu", steps: 8200),
-    StepsDayModel(date: "fri", steps: 7600),
-    StepsDayModel(date: "sat", steps: 7000),
-    StepsDayModel(date: "sun", steps: 8000),
-    StepsDayModel(date: "mon", steps: 8200),
-  ];
 
   List<StepsDayModel> tester = [];
   List<StepsDayModel> displaySteps = [];
@@ -53,7 +33,6 @@ class _HomeState extends State<Home> {
 
   void initState() {
     super.initState();
-    //_db.setSteps();
     _getDateAndSteps();
     _getStepGoal();
   }
