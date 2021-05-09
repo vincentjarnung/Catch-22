@@ -1,13 +1,11 @@
 import 'package:catch22_flutter/charts/steps_chart.dart';
 import 'package:catch22_flutter/models/steps_day.dart';
-import 'package:catch22_flutter/services/auth.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/back_img_button_widget.dart';
+import 'package:catch22_flutter/shared/change_date_widget.dart';
 import 'package:catch22_flutter/shared/constants/color_constants.dart';
 import 'package:catch22_flutter/shared/img_button_widget.dart';
-import 'package:charts_flutter/flutter.dart' as charts;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:intl/intl.dart';
@@ -18,8 +16,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  AuthService _auth = AuthService();
   DatabaseService _db = DatabaseService();
+
   final List<StepsDayModel> data = [
     StepsDayModel(date: "2021-05-01", steps: 7600),
     StepsDayModel(date: "2021-05-02", steps: 7000),
@@ -33,8 +31,8 @@ class _HomeState extends State<Home> {
   double steps;
   int stepGoal;
   String errorTxt = '';
-  DateTime cDate;
-  bool hasData;
+  DateTime cDate = DateTime.now();
+  bool hasData = false;
   StateSetter _setter;
   List<StepsDayModel> chartData = [
     StepsDayModel(date: 'mon', steps: 7600),
@@ -47,64 +45,39 @@ class _HomeState extends State<Home> {
     StepsDayModel(date: "mon", steps: 8200),
   ];
 
+  List<StepsDayModel> tester = [];
+  List<StepsDayModel> displaySteps = [];
+
   var formatter = new DateFormat('yyyy-MM-dd');
 
   void initState() {
     super.initState();
-    _test();
-    _getDate();
-  }
-
-  void _getDate() {
-    var now = new DateTime.now();
-    _getSteps(now);
+    _getDateAndSteps();
+    _getStepGoal();
   }
 
   void _getSteps(DateTime date) {
     String fDate = formatter.format(date);
     double cSteps;
     print(cDate.toString() + ' 1');
-    for (int i = 0; i < data.length; i++) {
-      if (data[i].date == fDate) {
-        cSteps = data[i].steps;
+    for (int i = 0; i < tester.length; i++) {
+      if (tester[i].date == fDate) {
+        cSteps = tester[i].steps;
         hasData = true;
+        break;
       }
     }
-
-    print(hasData);
     setState(() {
       steps = cSteps;
       cDate = date;
       if (steps == null) hasData = false;
+      print(hasData);
     });
   }
 
-  void _nextDate(DateTime date) {
-    cDate = DateTime(date.year, date.month, date.day + 1);
-    _getSteps(cDate);
-  }
+  void _onSelected(BuildContext context, int item, int stepGoal) {
+    int cStepGoal = stepGoal;
 
-  void _previousDate(DateTime date) {
-    cDate = DateTime(date.year, date.month, date.day - 1);
-    _getSteps(cDate);
-  }
-
-  void _addSteps() {
-    _setter(() {
-      stepGoal += 500;
-      print(stepGoal);
-    });
-  }
-
-  void _minusSteps() {
-    _setter(() {
-      stepGoal -= 500;
-    });
-  }
-
-  void _onSelected(BuildContext context, int item, int cStepGoal) {
-    print(cStepGoal);
-    stepGoal = cStepGoal;
     switch (item) {
       case 0:
         showDialog(
@@ -134,9 +107,11 @@ class _HomeState extends State<Home> {
                                     size: 30,
                                   ),
                                   onPressed: () {
-                                    _minusSteps();
+                                    _setter(() {
+                                      cStepGoal -= 500;
+                                    });
                                   }),
-                              Text(stepGoal.toString(),
+                              Text(cStepGoal.toString(),
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 25)),
@@ -146,7 +121,10 @@ class _HomeState extends State<Home> {
                                     size: 30,
                                   ),
                                   onPressed: () {
-                                    _addSteps();
+                                    _setter(() {
+                                      cStepGoal += 500;
+                                      print(stepGoal);
+                                    });
                                   }),
                             ],
                           ),
@@ -167,7 +145,8 @@ class _HomeState extends State<Home> {
                               icon: Icon(Icons.done),
                               text: 'Save',
                               onClick: () {
-                                _db.updateStepGoal(stepGoal);
+                                _getStepGoal();
+                                _db.updateStepGoal(cStepGoal);
                                 Navigator.of(context).pop();
                               },
                               width: 100,
@@ -187,171 +166,175 @@ class _HomeState extends State<Home> {
     }
   }
 
-  void _test() {
-    String firebaseUser = _auth.getCurrentUser();
-    FirebaseFirestore.instance.collection('users').doc(firebaseUser).get().then(
-        (value) => print(value.data()['stepGoal'].toString() + 'LOOOK HERE'));
+  Future _getStepGoal() async {
+    Future<DocumentSnapshot> user = _db.user;
+    user.then((snapshot) {
+      var userDoc = snapshot.data();
+      setState(() {
+        stepGoal = userDoc['stepGoal'];
+        print(stepGoal.toString() + ' Det funkar !!!!!!!!!!!!!!!!!!');
+        return stepGoal;
+      });
+    });
+  }
+
+  Future _getDateAndSteps() async {
+    Future<QuerySnapshot> steps = _db.steps;
+    steps.then((snapshot) {
+      snapshot.docs.forEach((doc) {
+        tester.add(
+            StepsDayModel(date: doc.id, steps: doc.data()['steps'].toDouble()));
+      });
+      print(tester);
+      _getSteps(DateTime.now());
+    });
+  }
+
+  void _lastWeekData(List<StepsDayModel> data) {
+    for (int i = 1; i < tester.length; i++) {}
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-        stream: _db.user,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || !snapshot.data.exists) {
-            return Center(child: CircularProgressIndicator());
-          } else {
-            var userDoc = snapshot.data;
-            stepGoal = userDoc['stepGoal'];
-            return Scaffold(
-                appBar: AppBar(
-                  title: Center(
-                    child: Text('Home'),
-                  ),
-                  actions: <Widget>[
-                    PopupMenuButton(
-                        onSelected: (item) =>
-                            _onSelected(context, item, userDoc['stepGoal']),
-                        itemBuilder: (context) => [
-                              PopupMenuItem<int>(
-                                value: 0,
-                                child: Text('Change Goal'),
-                              ),
-                              PopupMenuItem<int>(
-                                value: 1,
-                                child: Text('Log Out'),
-                              ),
-                            ])
-                  ],
-                ),
-                body: SingleChildScrollView(
-                    child: Column(
-                  children: [
-                    SizedBox(
-                      height: 20,
-                    ),
-                    Container(
-                      height: 125,
-                      width: 370,
-                      decoration: BoxDecoration(
-                          color: ColorConstants.kyellow,
-                          borderRadius: BorderRadius.all(
-                            Radius.circular(30),
-                          )),
-                      child: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 10, 10, 0),
-                            child: Row(children: [
-                              Image.asset(
-                                'assets/images/steps.png',
-                                width: 30,
-                                height: 30,
-                                fit: BoxFit.cover,
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(left: 20),
-                                child: Text('Steps',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20)),
-                              )
-                            ]),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-                            child: SfLinearGauge(
-                              axisTrackStyle:
-                                  LinearAxisTrackStyle(color: Colors.grey[350]),
-                              maximum: userDoc['stepGoal'].toDouble(),
-                              barPointers: [
-                                LinearBarPointer(
-                                  value: hasData ? steps : 0,
-                                  color: ColorConstants.kSecoundaryColor,
-                                )
-                              ],
-                              showAxisTrack: true,
-                              showLabels: false,
-                              showTicks: false,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(40, 10, 40, 0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  children: [
-                                    Text(''),
-                                    Text(
-                                        hasData
-                                            ? steps.toInt().toString()
-                                            : '0',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 20))
-                                  ],
-                                ),
-                                Column(
-                                  children: [
-                                    Text('GOAL'),
-                                    Text(userDoc['stepGoal'].toString(),
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 20))
-                                  ],
-                                )
-                              ],
-                            ),
-                          )
-                        ],
+    return Scaffold(
+        appBar: AppBar(
+          title: Center(
+            child: Text('Home'),
+          ),
+          actions: <Widget>[
+            PopupMenuButton(
+                onSelected: (item) => _onSelected(context, item, stepGoal),
+                itemBuilder: (context) => [
+                      PopupMenuItem<int>(
+                        value: 0,
+                        child: Text('Change Goal'),
                       ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                            icon: Icon(Icons.arrow_back),
-                            onPressed: () {
-                              _previousDate(cDate);
-                            }),
-                        Text(formatter.format(cDate),
+                      PopupMenuItem<int>(
+                        value: 1,
+                        child: Text('Log Out'),
+                      ),
+                    ])
+          ],
+        ),
+        body: SingleChildScrollView(
+            child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: 20,
+            ),
+            Container(
+              height: 125,
+              width: 370,
+              decoration: BoxDecoration(
+                  color: ColorConstants.kyellow,
+                  borderRadius: BorderRadius.all(
+                    Radius.circular(30),
+                  )),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 10, 0),
+                    child: Row(children: [
+                      Image.asset(
+                        'assets/images/steps.png',
+                        width: 30,
+                        height: 30,
+                        fit: BoxFit.cover,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 20),
+                        child: Text('Steps',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 20)),
-                        IconButton(
-                            icon: Icon(Icons.arrow_forward),
-                            onPressed: () {
-                              _nextDate(cDate);
-                            }),
+                      )
+                    ]),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                    child: SfLinearGauge(
+                      axisTrackStyle:
+                          LinearAxisTrackStyle(color: Colors.grey[350]),
+                      maximum: stepGoal == null ? 100 : stepGoal.toDouble(),
+                      barPointers: [
+                        LinearBarPointer(
+                          value: hasData ? steps : 0,
+                          color: ColorConstants.kSecoundaryColor,
+                        )
+                      ],
+                      showAxisTrack: true,
+                      showLabels: false,
+                      showTicks: false,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(40, 10, 40, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          children: [
+                            Text(''),
+                            Text(hasData ? steps.toInt().toString() : '0',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 20))
+                          ],
+                        ),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('GOAL'),
+                            Text(stepGoal.toString(),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 20))
+                          ],
+                        )
                       ],
                     ),
-                    SizedBox(
-                      height: 20,
-                    ),
-                    ImageButtonWidget(
-                      icon: Icon(Icons.add),
-                      text: 'Add Activity',
-                      onClick: () {},
-                      width: 200,
-                      height: 50,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Container(
-                        width: 500,
-                        height: 300,
-                        child: StepsChart(
-                          data: chartData,
-                        ),
-                      ),
-                    ),
-                  ],
-                )));
-          }
-        });
+                  )
+                ],
+              ),
+            ),
+            ChangeDateWidget(
+                txt: formatter.format(cDate),
+                addColor:
+                    formatter.format(cDate) == formatter.format(DateTime.now())
+                        ? Colors.grey
+                        : null,
+                minus: () {
+                  cDate = DateTime(cDate.year, cDate.month, cDate.day - 1);
+                  _getSteps(cDate);
+                },
+                add: formatter.format(cDate) == formatter.format(DateTime.now())
+                    ? null
+                    : () {
+                        cDate =
+                            DateTime(cDate.year, cDate.month, cDate.day + 1);
+                        _getSteps(cDate);
+                      }),
+            SizedBox(
+              height: 20,
+            ),
+            ImageButtonWidget(
+              icon: Icon(Icons.add),
+              text: 'Add Activity',
+              onClick: () {},
+              width: 200,
+              height: 50,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Container(
+                width: 500,
+                height: 300,
+                child: StepsChart(
+                  data: tester,
+                ),
+              ),
+            ),
+          ],
+        )));
   }
 }
 
