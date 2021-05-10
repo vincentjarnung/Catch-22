@@ -1,4 +1,4 @@
-import 'package:catch22_flutter/screens/authenticate/get_steps.dart';
+import 'package:catch22_flutter/screens/wrapper.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/button_widget.dart';
 import 'package:catch22_flutter/shared/form_textfield_widget.dart';
@@ -133,15 +133,21 @@ class _RegisterState extends State<Register> {
                     text: "Register",
                     hasBorder: false,
                     onClick: () async {
-                      if (_formKey.currentState.validate()) {
+                      final valid = await _db
+                          .usernameCheck(userName.trimRight().toLowerCase());
+                      if (!valid) {
+                        setState(() {
+                          error = "User Name alredy exist";
+                        });
+                      } else if (_formKey.currentState.validate()) {
                         setState(() => loading = true);
                         dynamic result = await _auth.createUser(
-                          userName.trimRight(),
+                          userName.trimRight().toLowerCase(),
                           email.trimRight(),
                           password.trimRight(),
                           stepGoal,
                         );
-                        _db.setSteps();
+
                         // TODO: Add different error based on result
 
                         if (result == null) {
@@ -150,11 +156,11 @@ class _RegisterState extends State<Register> {
                             loading = false;
                           });
                         } else {
-                          print('Trolololololol');
-                          /*Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => SignIn()));*/
+                          _db.setSteps().whenComplete(() =>
+                              Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => Wrapper())));
                         }
                       }
                     },

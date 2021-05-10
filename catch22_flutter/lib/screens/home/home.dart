@@ -19,6 +19,9 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   DatabaseService _db = DatabaseService();
 
+  List<StepsDayModel> tester = [];
+  List<StepsDayModel> displaySteps = [];
+
   double steps;
   int stepGoal;
   String errorTxt = '';
@@ -26,21 +29,20 @@ class _HomeState extends State<Home> {
   bool hasData = false;
   StateSetter _setter;
 
-  List<StepsDayModel> tester = [];
-  List<StepsDayModel> displaySteps = [];
-
   var formatter = new DateFormat('yyyy-MM-dd');
 
   void initState() {
     super.initState();
     _getDateAndSteps();
+    _getStepGoal().whenComplete(() {
+      setState(() {});
+    });
     _getStepGoal();
   }
 
   void _getSteps(DateTime date) {
     String fDate = formatter.format(date);
     double cSteps;
-    print(cDate.toString() + ' 1');
     for (int i = 0; i < tester.length; i++) {
       if (tester[i].date == fDate) {
         cSteps = tester[i].steps;
@@ -52,7 +54,7 @@ class _HomeState extends State<Home> {
       steps = cSteps;
       cDate = date;
       if (steps == null) hasData = false;
-      print(hasData);
+      print(steps);
     });
   }
 
@@ -153,7 +155,6 @@ class _HomeState extends State<Home> {
       var userDoc = snapshot.data();
       setState(() {
         stepGoal = userDoc['stepGoal'];
-        print(stepGoal.toString() + ' Det funkar !!!!!!!!!!!!!!!!!!');
         return stepGoal;
       });
     });
@@ -166,16 +167,13 @@ class _HomeState extends State<Home> {
         tester.add(
             StepsDayModel(date: doc.id, steps: doc.data()['steps'].toDouble()));
       });
-      print(tester);
       _getSteps(DateTime.now());
     });
   }
 
   void _lastWeekData(List<StepsDayModel> data, DateTime date) {
-    print(tester.toString() + ' 2 2');
     for (int i = 1; i < tester.length; i++) {
       if (tester[i].date == formatter.format(DateTime.now())) {
-        print(tester[i].date);
         for (int n = 6; n >= 0; n--) {
           DateTime days = DateTime(date.year, date.month, date.day - n);
           String dayOfWeek = DateFormat('EEEE').format(days);
@@ -186,7 +184,6 @@ class _HomeState extends State<Home> {
         break;
       }
     }
-    print(displaySteps.toString() + ' 22');
   }
 
   @override
@@ -255,6 +252,7 @@ class _HomeState extends State<Home> {
                       maximum: stepGoal == null ? 100 : stepGoal.toDouble(),
                       barPointers: [
                         LinearBarPointer(
+                          enableAnimation: false,
                           value: hasData ? steps : 0,
                           color: ColorConstants.kSecoundaryColor,
                         )
@@ -318,7 +316,6 @@ class _HomeState extends State<Home> {
               icon: Icon(Icons.add),
               text: 'Add Activity',
               onClick: () {
-                print('Goin Next');
                 Navigator.push(context,
                     MaterialPageRoute(builder: (context) => AddActivity()));
               },

@@ -16,14 +16,14 @@ class ImageButtonWidget extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
           border: Border.fromBorderSide(BorderSide.none),
-          borderRadius: BorderRadius.circular(30.0),
+          borderRadius: BorderRadius.circular(20.0),
           color: ColorConstants.kyellow),
       height: height == null ? 60 : height,
       width: width == null ? double.infinity : width,
       child: FlatButton.icon(
         icon: icon,
         splashColor: Colors.yellow[700],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         label: Text(
           text,
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),

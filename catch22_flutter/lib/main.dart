@@ -1,3 +1,4 @@
+import 'package:catch22_flutter/models/simple_user.dart';
 import 'package:catch22_flutter/services/auth.dart';
 import 'package:catch22_flutter/shared/constants/color_constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -17,7 +18,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Firebase.initializeApp();
-    return StreamProvider<User>.value(
+
+    return StreamProvider<SimpleUser>.value(
       value: AuthService().user,
       initialData: null,
       child: MaterialApp(

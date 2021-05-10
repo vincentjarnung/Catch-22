@@ -20,15 +20,15 @@ class ButtonWidget extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
           border: hasBorder
-              ? Border.all(color: Colors.blue, width: 2.0)
+              ? Border.all(color: ColorConstants.kPrimaryColor, width: 3.0)
               : Border.fromBorderSide(BorderSide.none),
-          borderRadius: BorderRadius.circular(10.0),
-          color: hasBorder ? Colors.white : ColorConstants.kPrimaryColor),
+          borderRadius: BorderRadius.circular(20.0),
+          color: hasBorder ? Colors.white : ColorConstants.kyellow),
       height: height == null ? 60 : height,
       width: width == null ? double.infinity : width,
       child: FlatButton(
         splashColor: hasBorder ? Colors.white30 : Colors.yellow[700],
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Text(
           text,
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),

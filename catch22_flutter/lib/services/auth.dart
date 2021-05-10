@@ -24,8 +24,9 @@ class AuthService {
     return uid;
   }
 
-  Stream<User> get user {
-    return _auth.idTokenChanges();
+  Stream<SimpleUser> get user {
+    print(_auth.idTokenChanges().map(_userFromFirebaseUser));
+    return _auth.idTokenChanges().map(_userFromFirebaseUser);
   }
 
   SimpleUser _userFromFirebaseUser(User user) {

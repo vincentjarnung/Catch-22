@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
+
 class SimpleUser {
   final String uid;
 
-  SimpleUser({this.uid});
+  SimpleUser({@required this.uid});
 }

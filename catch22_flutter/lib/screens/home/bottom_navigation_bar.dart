@@ -1,12 +1,13 @@
-import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:catch22_flutter/screens/home/competition.dart';
 import 'package:catch22_flutter/screens/home/home.dart';
 import 'package:catch22_flutter/screens/home/profile.dart';
-import 'package:catch22_flutter/services/database.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:flutter/material.dart';
 
 class BottomNavBar extends StatefulWidget {
+  final int pageSel;
+
+  BottomNavBar({this.pageSel});
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
 }
@@ -17,7 +18,15 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   void initState() {
     super.initState();
-    selIndex = 0;
+    if (widget.pageSel != null) {
+      setState(() {
+        selIndex = widget.pageSel;
+      });
+    } else {
+      setState(() {
+        selIndex = 0;
+      });
+    }
   }
 
   void onItemTapped(int index) {
@@ -26,9 +35,9 @@ class _BottomNavBarState extends State<BottomNavBar> {
     });
   }
 
-  final widgetOptions = [Home(), Profile(), Competition()];
   @override
   Widget build(BuildContext context) {
+    final widgetOptions = [Home(), Profile(), Competition()];
     return Scaffold(
       body: Center(
         child: widgetOptions.elementAt(selIndex),
