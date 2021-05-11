@@ -148,8 +148,6 @@ class _RegisterState extends State<Register> {
                           stepGoal,
                         );
 
-                        // TODO: Add different error based on result
-
                         if (result == null) {
                           setState(() {
                             error = "Email or password invalid";

@@ -75,21 +75,16 @@ class DatabaseService {
 
   Future setSteps() async {
     for (int i = 1; i < 32; i++) {
-      String day;
       Random random = new Random();
-      int randNum = random.nextInt(5000) + 5000; // from 10 upto 99 included
-
-      if (i < 10) {
-        day = '0' + i.toString();
-      } else {
-        day = i.toString();
-      }
+      int randNum = random.nextInt(5000) + 5000; // from 5000 upto 9999 included
+      String date = DateFormat('yyyy-MM-dd')
+          .format(DateTime.now().subtract(Duration(days: i)));
 
       await FirebaseFirestore.instance
           .collection('users')
           .doc(_auth.getCurrentUser())
           .collection('steps')
-          .doc('2021-05-' + day)
+          .doc(date)
           .set({'steps': randNum})
           .then((value) => print('Data Added'))
           .catchError((error) => (print('Error: ' + error)));
