@@ -36,6 +36,7 @@ dependencies:
   syncfusion_flutter_gauges: ^19.1.59
   intl: ^0.17.0
   flutter_date_pickers: ^0.2.4
+  firebase_storage: ^8.0.6
   
 
 dev_dependencies:

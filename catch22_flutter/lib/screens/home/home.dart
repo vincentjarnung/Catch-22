@@ -1,6 +1,7 @@
 import 'package:catch22_flutter/charts/steps_chart.dart';
 import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:catch22_flutter/screens/home/add_activity.dart';
+import 'package:catch22_flutter/services/auth.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/back_img_button_widget.dart';
 import 'package:catch22_flutter/shared/change_date_widget.dart';
@@ -11,6 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:intl/intl.dart';
 
+import '../wrapper.dart';
+
 class Home extends StatefulWidget {
   @override
   _HomeState createState() => _HomeState();
@@ -18,6 +21,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   DatabaseService _db = DatabaseService();
+  AuthService _auth = AuthService();
 
   List<StepsDayModel> tester = [];
   List<StepsDayModel> displaySteps = [];
@@ -145,6 +149,8 @@ class _HomeState extends State<Home> {
             });
         break;
       case 1:
+        _auth.signOut().whenComplete(() => Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => Wrapper())));
         break;
     }
   }

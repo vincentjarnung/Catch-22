@@ -1,9 +1,11 @@
 import 'package:catch22_flutter/screens/home/bottom_navigation_bar.dart';
+import 'package:catch22_flutter/services/auth.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/button_widget.dart';
 import 'package:catch22_flutter/shared/change_date_widget.dart';
 import 'package:catch22_flutter/shared/constants/color_constants.dart';
 import 'package:catch22_flutter/shared/form_textfield_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_date_pickers/flutter_date_pickers.dart' as dp;
 import 'package:catch22_flutter/shared/img_button_widget.dart';
 import 'package:flutter/material.dart';
@@ -28,7 +30,7 @@ class SelectActivity extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(60, 40, 60, 20),
               child: Text(
-                'Create a Goal Activity to cooperate with your friends to reach a common goal!',
+                'Create a Goal Activity to collaborate with your friends to reach a common goal!',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
@@ -42,7 +44,7 @@ class SelectActivity extends StatelessWidget {
               icon: Icon(Icons.add),
               text: 'Create a Goal Activity',
               onClick: () {
-                Navigator.pushReplacement(context,
+                Navigator.push(context,
                     MaterialPageRoute(builder: (context) => GoalActivity()));
               },
             ),
@@ -88,7 +90,8 @@ class GoalActivity extends StatefulWidget {
 
 class _GoalActivityState extends State<GoalActivity> {
   final DatabaseService _db = DatabaseService();
-
+  final AuthService _auth = AuthService();
+  String userName;
   int stepGoal = 100000;
   int improvmentGoal = 25;
   bool hasSel = true;
@@ -109,6 +112,22 @@ class _GoalActivityState extends State<GoalActivity> {
 
   String getRandomString(int length) => String.fromCharCodes(Iterable.generate(
       length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))));
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    setState(() {});
+  }
+
+  Future _getUserName() async {
+    DocumentReference docRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(_auth.getCurrentUser());
+    docRef.get().then((value) {
+      userName = value.data()['userName'];
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -316,10 +335,11 @@ class _GoalActivityState extends State<GoalActivity> {
                       if (isStep) {
                         print(DateFormat('yyyy-MM-dd').format(_selectedDate));
                         print(stepGoal);
-
                         print(actName);
+                        _getUserName();
                         _db
                             .newActivity(
+                                userName,
                                 actName,
                                 stepGoal,
                                 isStep,
@@ -327,6 +347,7 @@ class _GoalActivityState extends State<GoalActivity> {
                                 code)
                             .whenComplete(() => _db.joinActivity(actName));
                       }
+                      Navigator.pop(context);
                       Navigator.pop(context);
                       Navigator.pop(context);
                     },

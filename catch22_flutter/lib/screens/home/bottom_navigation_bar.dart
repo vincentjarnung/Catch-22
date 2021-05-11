@@ -1,13 +1,10 @@
 import 'package:catch22_flutter/screens/home/competition.dart';
 import 'package:catch22_flutter/screens/home/home.dart';
-import 'package:catch22_flutter/screens/home/profile.dart';
+import 'package:catch22_flutter/screens/home/trophies.dart';
 
 import 'package:flutter/material.dart';
 
 class BottomNavBar extends StatefulWidget {
-  final int pageSel;
-
-  BottomNavBar({this.pageSel});
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
 }
@@ -18,15 +15,10 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   void initState() {
     super.initState();
-    if (widget.pageSel != null) {
-      setState(() {
-        selIndex = widget.pageSel;
-      });
-    } else {
-      setState(() {
-        selIndex = 0;
-      });
-    }
+
+    setState(() {
+      selIndex = 0;
+    });
   }
 
   void onItemTapped(int index) {
@@ -37,7 +29,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final widgetOptions = [Home(), Profile(), Competition()];
+    final widgetOptions = [Home(), Trophies(), Competition()];
     return Scaffold(
       body: Center(
         child: widgetOptions.elementAt(selIndex),

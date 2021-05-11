@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'auth.dart';
 import 'dart:math';
 
@@ -32,23 +34,34 @@ class DatabaseService {
         .update({'steps': FieldValue.increment(steps)});
   }
 
-  Future newActivity(
-      String name, int goal, bool isStep, String endDate, String code) async {
-    print(name);
-    print(getUserName());
+  Future newActivity(String userName, String name, int goal, bool isStep,
+      String endDate, String code) async {
+    print(userName);
     await FirebaseFirestore.instance.collection('activities').doc(name).set({
       'goal': goal,
       'isStep': isStep,
       'endDate': endDate,
-      'code': code
+      'startDate': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      'code': code,
+      'currentSteps': 0
     }).whenComplete(() {
       return FirebaseFirestore.instance
           .collection('activities')
           .doc(name)
           .collection('members')
           .doc(_auth.getCurrentUser())
-          .set({'userName': 'vincent'});
+          .set({'userName': userName});
     });
+  }
+
+  Future jGroup(String groupName, String name) async {
+    print(name);
+    return await FirebaseFirestore.instance
+        .collection('activities')
+        .doc(groupName)
+        .collection('members')
+        .doc(_auth.getCurrentUser())
+        .set({'userName': name});
   }
 
   Future joinActivity(String name) async {
@@ -58,17 +71,6 @@ class DatabaseService {
         .update({
       'activities': FieldValue.arrayUnion([name])
     });
-  }
-
-  Future getUserName() async {
-    String userName;
-    DocumentReference docRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(_auth.getCurrentUser());
-    await docRef.get().then((value) {
-      userName = value.data()['userName'].toString();
-    });
-    return userName;
   }
 
   Future setSteps() async {
@@ -110,7 +112,6 @@ class DatabaseService {
     return docRef.get().then((snapshot) {
       if (snapshot.exists) {
         activi = snapshot.data()['activities'].toList();
-        print(activi);
       }
       return activi;
     });
@@ -129,5 +130,37 @@ class DatabaseService {
         .collection('users')
         .doc(_auth.getCurrentUser())
         .get();
+  }
+
+  Stream<DocumentSnapshot> get activities async* {
+    yield* FirebaseFirestore.instance
+        .collection('users')
+        .doc(_auth.getCurrentUser())
+        .snapshots();
+  }
+
+  Stream<DocumentSnapshot> viewActivity(String name) async* {
+    yield* FirebaseFirestore.instance
+        .collection('activities')
+        .doc(name)
+        .snapshots();
+  }
+
+  Stream<QuerySnapshot> get achievements {
+    return FirebaseFirestore.instance.collection('achievements').snapshots();
+  }
+
+  Stream<QuerySnapshot> get userAchievements {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(_auth.getCurrentUser())
+        .collection('achievements')
+        .snapshots();
+  }
+
+  Future<String> getToolImg(String imgName) async {
+    final ref = FirebaseStorage.instance.ref().child(imgName);
+    String url = await ref.getDownloadURL();
+    return url;
   }
 }
