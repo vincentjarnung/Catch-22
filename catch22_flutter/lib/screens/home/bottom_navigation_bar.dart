@@ -1,3 +1,4 @@
+import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:catch22_flutter/screens/home/competition.dart';
 import 'package:catch22_flutter/screens/home/home.dart';
 import 'package:catch22_flutter/screens/home/trophies.dart';

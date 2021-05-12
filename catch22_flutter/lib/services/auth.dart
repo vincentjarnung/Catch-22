@@ -1,4 +1,5 @@
 import 'package:catch22_flutter/models/simple_user.dart';
+import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'database.dart';
 

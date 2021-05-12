@@ -1,7 +1,9 @@
+import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:catch22_flutter/screens/wrapper.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/button_widget.dart';
 import 'package:catch22_flutter/shared/form_textfield_widget.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:catch22_flutter/services/auth.dart';
 import 'package:catch22_flutter/screens/authenticate/sign_in.dart';
@@ -154,11 +156,12 @@ class _RegisterState extends State<Register> {
                             loading = false;
                           });
                         } else {
-                          _db.setSteps().whenComplete(() =>
-                              Navigator.pushReplacement(
+                          _db.setSteps().whenComplete(() => _db
+                              .createFirstAchievement()
+                              .whenComplete(() => Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => Wrapper())));
+                                      builder: (context) => Wrapper()))));
                         }
                       }
                     },

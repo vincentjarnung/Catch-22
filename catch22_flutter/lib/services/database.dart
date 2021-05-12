@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'auth.dart';
 import 'dart:math';
@@ -77,9 +76,7 @@ class DatabaseService {
     for (int i = 0; i < 32; i++) {
       Random random = new Random();
       int randNum = random.nextInt(5000) + 5000; // from 5000 upto 9999 included
-      if (i == 0) {
-        randNum = 0;
-      }
+
       String date = DateFormat('yyyy-MM-dd')
           .format(DateTime.now().subtract(Duration(days: i)));
 
@@ -92,6 +89,18 @@ class DatabaseService {
           .then((value) => print('Data Added'))
           .catchError((error) => (print('Error: ' + error)));
     }
+  }
+
+  Future createFirstAchievement() async {
+    return await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_auth.getCurrentUser())
+        .collection('achievements')
+        .doc('register')
+        .set({
+      'date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      'ref': 'register.png'
+    });
   }
 
   Future<bool> usernameCheck(String username) async {

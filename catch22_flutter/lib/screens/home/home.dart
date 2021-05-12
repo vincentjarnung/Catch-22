@@ -1,16 +1,21 @@
 import 'package:catch22_flutter/charts/steps_chart.dart';
 import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:catch22_flutter/screens/home/add_activity.dart';
+import 'package:catch22_flutter/screens/home/bottom_navigation_bar.dart';
 import 'package:catch22_flutter/services/auth.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/back_img_button_widget.dart';
 import 'package:catch22_flutter/shared/change_date_widget.dart';
+import 'package:catch22_flutter/shared/change_week_widget.dart';
 import 'package:catch22_flutter/shared/constants/color_constants.dart';
 import 'package:catch22_flutter/shared/img_button_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:pedometer/pedometer.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 
 import '../wrapper.dart';
 
@@ -26,27 +31,62 @@ class _HomeState extends State<Home> {
   List<StepsDayModel> tester = [];
   List<StepsDayModel> displaySteps = [];
 
+  Stream<StepCount> _stepCountStream;
+
   double steps;
+  double cSteps = 0;
   int stepGoal;
   String errorTxt = '';
   DateTime cDate = DateTime.now();
   bool hasData = false;
   StateSetter _setter;
+  int _pSteps = 0;
 
   var formatter = new DateFormat('yyyy-MM-dd');
 
+  Future _getPermission() async {
+    var status = await Permission.activityRecognition.status;
+
+    if (status.isDenied) {
+      print('denied');
+      await Permission.activityRecognition
+          .request()
+          .whenComplete(() => setState(() {}));
+    }
+    if (status.isGranted) {
+      print('granted');
+      _stepCountStream = Pedometer.stepCountStream;
+      _stepCountStream.listen(onStepCount).onError(onStepCountError);
+      print('hello');
+    }
+  }
+
+  void onStepCountError(error) {
+    print('onStepCountError: $error');
+    setState(() {});
+  }
+
+  void onStepCount(StepCount event) {
+    print(event);
+    setState(() {
+      _pSteps = event.steps;
+      steps = _pSteps + cSteps;
+      print(steps);
+    });
+  }
+
   void initState() {
     super.initState();
+    _getPermission();
     _getDateAndSteps();
     _getStepGoal().whenComplete(() {
       setState(() {});
     });
-    _getStepGoal();
   }
 
   void _getSteps(DateTime date) {
     String fDate = formatter.format(date);
-    double cSteps;
+
     for (int i = 0; i < tester.length; i++) {
       if (tester[i].date == fDate) {
         cSteps = tester[i].steps;
@@ -55,7 +95,7 @@ class _HomeState extends State<Home> {
       }
     }
     setState(() {
-      steps = cSteps;
+      steps = cSteps + _pSteps;
       cDate = date;
       if (steps == null) hasData = false;
       print(steps);
@@ -134,7 +174,10 @@ class _HomeState extends State<Home> {
                               onClick: () {
                                 _getStepGoal();
                                 _db.updateStepGoal(cStepGoal);
-                                Navigator.of(context).pop();
+                                Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => BottomNavBar()));
                               },
                               width: 100,
                               height: 50,
@@ -173,11 +216,16 @@ class _HomeState extends State<Home> {
         tester.add(
             StepsDayModel(date: doc.id, steps: doc.data()['steps'].toDouble()));
       });
+      print(displaySteps.length);
+      if (displaySteps.length == 0) {
+        _lastWeekData(tester, DateTime.now());
+      }
       _getSteps(DateTime.now());
     });
   }
 
   void _lastWeekData(List<StepsDayModel> data, DateTime date) {
+    displaySteps = [];
     for (int i = 1; i < tester.length; i++) {
       if (tester[i].date == formatter.format(DateTime.now())) {
         for (int n = 6; n >= 0; n--) {
@@ -194,7 +242,6 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    _lastWeekData(tester, DateTime.now());
     return Scaffold(
         appBar: AppBar(
           leading: Container(),
@@ -336,6 +383,25 @@ class _HomeState extends State<Home> {
                 child: StepsChart(data: displaySteps),
               ),
             ),
+            ChangeWeekWidget(
+                txt: 'Last 7 days',
+                addColor:
+                    formatter.format(cDate) == formatter.format(DateTime.now())
+                        ? Colors.grey
+                        : null,
+                minus: () {
+                  DateTime now = DateTime.now();
+                  DateTime date = DateTime(now.year, now.month, now.day - 7);
+                },
+                add: formatter.format(cDate) == formatter.format(DateTime.now())
+                    ? null
+                    : () {
+                        setState(() {
+                          DateTime now = DateTime.now();
+                          _lastWeekData(tester,
+                              DateTime(now.year, now.month, now.day + 7));
+                        });
+                      }),
           ],
         )));
   }
