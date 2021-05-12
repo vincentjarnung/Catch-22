@@ -2,6 +2,7 @@ import 'package:catch22_flutter/services/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:catch22_flutter/shared/grid_list_time.dart';
+import 'package:catch22_flutter/screens/home/view_achievement.dart';
 
 class Trophies extends StatefulWidget {
   @override
@@ -10,21 +11,52 @@ class Trophies extends StatefulWidget {
 
 class _TrophiesState extends State<Trophies> {
   final DatabaseService _db = DatabaseService();
+  List<Widget> _list = [];
 
-  List<Widget> getAllItems(AsyncSnapshot<QuerySnapshot> snapshot) {
-    return snapshot.data.docs
-        .map<Widget>((doc) => new GridListItem(
-              imgRef: doc['ref'],
-            ))
-        .toList();
+  Future<List<Widget>> _getAllItems(
+      AsyncSnapshot<QuerySnapshot> snapshot) async {
+    var futures = snapshot.data.docs.map((doc) async {
+      bool isOwned = false;
+      String date = ' -';
+      var val = await _db.ownAchievementCheck(doc['ref']);
+      if (val != null) {
+        isOwned = true;
+        date = val;
+      }
+
+      return GridListItem(
+        imgRef: doc['ref'],
+        owned: isOwned,
+        onClick: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => ViewAchievements(
+                      title: doc['title'],
+                      description: doc['description'],
+                      ref: doc['ref'],
+                      isOwned: isOwned,
+                      date: date)));
+          print(doc['ref'].toString() +
+              ' ' +
+              doc['title'].toString() +
+              ' ' +
+              doc['description'].toString());
+        },
+      );
+    }).toList();
+    return await Future.wait(futures);
   }
 
-  List<Widget> getUserItems(AsyncSnapshot<QuerySnapshot> snap) {
-    return snap.data.docs
-        .map<Widget>((doc) => new GridListItem(
-              imgRef: doc['ref'],
-            ))
-        .toList();
+  _getListWidgets(snapshot) {
+    _getAllItems(snapshot).then((value) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _list = value;
+      });
+    });
   }
 
   @override
@@ -32,41 +64,26 @@ class _TrophiesState extends State<Trophies> {
     double maxWidth = MediaQuery.of(context).size.width;
     double maxHeight = MediaQuery.of(context).size.height -
         (MediaQuery.of(context).padding.top + kToolbarHeight);
-    return StreamBuilder(
-        stream: _db.achievements,
+    return FutureBuilder(
+        future: _db.achievements,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return CircularProgressIndicator();
           } else {
+            _getListWidgets(snapshot);
             return Scaffold(
               appBar: AppBar(
                 title: Text('Trophies'),
                 centerTitle: true,
+                leading: Container(),
               ),
+              backgroundColor: Color.fromRGBO(0, 0, 0, 0.5),
               body: Stack(
                 children: [
                   GridView.count(
                     crossAxisCount: 3,
-                    children: getAllItems(snapshot),
+                    children: _list,
                   ),
-                  Container(
-                    width: maxWidth,
-                    height: maxHeight,
-                    color: Color.fromRGBO(0, 0, 0, 0.5),
-                  ),
-                  StreamBuilder(
-                      stream: _db.userAchievements,
-                      builder: (context, snap) {
-                        print(getUserItems(snap));
-                        if (!snap.hasData) {
-                          return CircularProgressIndicator();
-                        } else {
-                          return GridView.count(
-                            crossAxisCount: 3,
-                            children: getUserItems(snap),
-                          );
-                        }
-                      }),
                 ],
               ),
             );

@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 
 class GridListItem extends StatefulWidget {
   final String imgRef;
+  final bool owned;
+  final Function onClick;
 
-  GridListItem({@required this.imgRef});
+  GridListItem({@required this.imgRef, @required this.owned, this.onClick});
   @override
   _GridListItemState createState() => _GridListItemState();
 }
@@ -20,13 +22,27 @@ class _GridListItemState extends State<GridListItem> {
             return Center(
               child: CircularProgressIndicator(),
             );
-          return Padding(
+          return GestureDetector(
+            onTap: widget.onClick,
+            child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Image.network(
-                snapshot.data,
-                height: 100,
-                width: 100,
-              ));
+              child: !widget.owned
+                  ? ColorFiltered(
+                      colorFilter:
+                          ColorFilter.mode(Colors.grey, BlendMode.modulate),
+                      child: Image.network(
+                        snapshot.data,
+                        height: 100,
+                        width: 100,
+                      ),
+                    )
+                  : Image.network(
+                      snapshot.data,
+                      height: 100,
+                      width: 100,
+                    ),
+            ),
+          );
         });
   }
 }

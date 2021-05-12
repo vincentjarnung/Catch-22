@@ -99,6 +99,21 @@ class DatabaseService {
     return result.docs.isEmpty;
   }
 
+  Future<String> ownAchievementCheck(achievement) async {
+    String date;
+    final result = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(_auth.getCurrentUser())
+        .collection('achievements')
+        .where('ref', isEqualTo: achievement)
+        .get();
+
+    result.docs.forEach((element) {
+      date = element.data()['date'];
+    });
+    return date;
+  }
+
   Future<List<dynamic>> groups() async {
     DocumentReference docRef = FirebaseFirestore.instance
         .collection("users")
@@ -141,8 +156,8 @@ class DatabaseService {
         .snapshots();
   }
 
-  Stream<QuerySnapshot> get achievements {
-    return FirebaseFirestore.instance.collection('achievements').snapshots();
+  Future<QuerySnapshot> get achievements {
+    return FirebaseFirestore.instance.collection('achievements').get();
   }
 
   Stream<QuerySnapshot> get userAchievements {

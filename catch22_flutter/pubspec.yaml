@@ -37,6 +37,7 @@ dependencies:
   intl: ^0.17.0
   flutter_date_pickers: ^0.2.4
   firebase_storage: ^8.0.6
+  pedometer: ^3.0.0
   
 
 dev_dependencies:
