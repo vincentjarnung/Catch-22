@@ -230,12 +230,19 @@ PODS:
   - Firebase/Firestore (7.11.0):
     - Firebase/CoreOnly
     - FirebaseFirestore (~> 7.11.0)
+  - Firebase/Storage (7.11.0):
+    - Firebase/CoreOnly
+    - FirebaseStorage (~> 7.11.0)
   - firebase_auth (1.1.2):
     - Firebase/Auth (= 7.11.0)
     - firebase_core
     - Flutter
-  - firebase_core (1.1.0):
+  - firebase_core (1.1.1):
     - Firebase/CoreOnly (= 7.11.0)
+    - Flutter
+  - firebase_storage (8.0.6):
+    - Firebase/Storage (= 7.11.0)
+    - firebase_core
     - Flutter
   - FirebaseAuth (7.11.0):
     - FirebaseCore (~> 7.0)
@@ -263,6 +270,9 @@ PODS:
     - "gRPC-C++ (~> 1.28.0)"
     - leveldb-library (~> 1.22)
     - nanopb (~> 2.30908.0)
+  - FirebaseStorage (7.11.0):
+    - FirebaseCore (~> 7.0)
+    - GTMSessionFetcher/Core (~> 1.4)
   - Flutter (1.0.0)
   - GoogleDataTransport (8.4.0):
     - GoogleUtilities/Environment (~> 7.2)
@@ -314,13 +324,20 @@ PODS:
     - nanopb/encode (= 2.30908.0)
   - nanopb/decode (2.30908.0)
   - nanopb/encode (2.30908.0)
+  - pedometer (0.0.1):
+    - Flutter
+  - "permission_handler (5.1.0+2)":
+    - Flutter
   - PromisesObjC (1.2.12)
 
 DEPENDENCIES:
   - cloud_firestore (from `.symlinks/plugins/cloud_firestore/ios`)
   - firebase_auth (from `.symlinks/plugins/firebase_auth/ios`)
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
+  - firebase_storage (from `.symlinks/plugins/firebase_storage/ios`)
   - Flutter (from `Flutter`)
+  - pedometer (from `.symlinks/plugins/pedometer/ios`)
+  - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
 
 SPEC REPOS:
   trunk:
@@ -331,6 +348,7 @@ SPEC REPOS:
     - FirebaseCore
     - FirebaseCoreDiagnostics
     - FirebaseFirestore
+    - FirebaseStorage
     - GoogleDataTransport
     - GoogleUtilities
     - "gRPC-C++"
@@ -347,8 +365,14 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/firebase_auth/ios"
   firebase_core:
     :path: ".symlinks/plugins/firebase_core/ios"
+  firebase_storage:
+    :path: ".symlinks/plugins/firebase_storage/ios"
   Flutter:
     :path: Flutter
+  pedometer:
+    :path: ".symlinks/plugins/pedometer/ios"
+  permission_handler:
+    :path: ".symlinks/plugins/permission_handler/ios"
 
 SPEC CHECKSUMS:
   abseil: 6c8eb7892aefa08d929b39f9bb108e5367e3228f
@@ -356,11 +380,13 @@ SPEC CHECKSUMS:
   cloud_firestore: 5dbb01f115c77f4380e2248852518f52830d631f
   Firebase: c121feb35e4126c0b355e3313fa9b487d47319fd
   firebase_auth: e7065954aa2a7c8ef1a8502fba3009bcdd8fc91a
-  firebase_core: 84dcd80ac6d29c3d1039071b7306ee99688eb9c7
+  firebase_core: 54856a8a39b8f3e35f34fdd3373f3b92a1daa68b
+  firebase_storage: 6b8df0d28a1978a3b9f44d550d6f28c301887bbc
   FirebaseAuth: 5fe4585c2ed847319f0ea68bd1d82c77e49ff9a0
   FirebaseCore: 907447d8917a4d3eb0cce2829c5a0ad21d90b432
   FirebaseCoreDiagnostics: 68ad972f99206cef818230f3f3179d52ccfb7f8c
   FirebaseFirestore: f495bb336b23eca23ea5d3605dce2a4cc214fde9
+  FirebaseStorage: 8542711850ca181a3931c0ed483006a7b46039e7
   Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
   GoogleDataTransport: cd9db2180fcecd8da1b561aea31e3e56cf834aa7
   GoogleUtilities: 284cddc7fffc14ae1907efb6f78ab95c1fccaedc
@@ -369,8 +395,10 @@ SPEC CHECKSUMS:
   GTMSessionFetcher: b3503b20a988c4e20cc189aa798fd18220133f52
   leveldb-library: 50c7b45cbd7bf543c81a468fe557a16ae3db8729
   nanopb: a0ba3315591a9ae0a16a309ee504766e90db0c96
+  pedometer: 381969883680ade42559782cc41a3bbd453d8234
+  permission_handler: ccb20a9fad0ee9b1314a52b70b76b473c5f8dab0
   PromisesObjC: 3113f7f76903778cf4a0586bd1ab89329a0b7b97
 
-PODFILE CHECKSUM: 3dffd8c48b531d21ec0ec153c22dc8e3a6223bc9
+PODFILE CHECKSUM: 9b820a051f93d0c2fe4cde2e9838a07426361e4a
 
 COCOAPODS: 1.10.1
