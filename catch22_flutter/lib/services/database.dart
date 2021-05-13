@@ -1,3 +1,4 @@
+import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
@@ -7,9 +8,14 @@ import 'dart:math';
 class DatabaseService {
   AuthService _auth = AuthService();
 
+  var usersInstance = FirebaseFirestore.instance.collection('users');
+  var activitiesInstance = FirebaseFirestore.instance.collection('activities');
+  var achievementsInstance =
+      FirebaseFirestore.instance.collection('achievements');
+
   Future newUserData(
       String userName, String email, String uid, int stepGoal) async {
-    return await FirebaseFirestore.instance.collection('users').doc(uid).set({
+    return await usersInstance.doc(uid).set({
       'userName': userName,
       'email': email,
       'stepGoal': stepGoal,
@@ -18,25 +24,54 @@ class DatabaseService {
   }
 
   Future updateStepGoal(int stepGoal) async {
-    return await FirebaseFirestore.instance
-        .collection('users')
+    return await usersInstance
         .doc(_auth.getCurrentUser())
         .update({'stepGoal': stepGoal});
   }
 
+  Future updateSteps(int steps, String date) async {
+    return await usersInstance
+        .doc(_auth.getCurrentUser())
+        .collection('steps')
+        .doc(date)
+        .update({'steps': steps});
+  }
+
   Future addActivity(String date, int steps) async {
-    return await FirebaseFirestore.instance
-        .collection('users')
+    return await usersInstance
         .doc(_auth.getCurrentUser())
         .collection('steps')
         .doc(date)
         .update({'steps': FieldValue.increment(steps)});
   }
 
+  Future<List<StepsDayModel>> getDateAndSteps() async {
+    List<StepsDayModel> allData = [];
+    await steps.then((snapshot) {
+      snapshot.docs.forEach((doc) {
+        allData.add(
+            StepsDayModel(date: doc.id, steps: doc.data()['steps'].toDouble()));
+      });
+    });
+    if (allData.length != 0) {
+      print(allData.length);
+      DateTime now = DateTime.now();
+      DateTime lastDate = DateTime.parse(allData[allData.length - 1].date);
+      int diff = now.difference(lastDate).inDays;
+
+      for (int n = 1; n <= diff; n++) {
+        String fDate = DateFormat('yyyy-MM-dd')
+            .format(DateTime(lastDate.year, lastDate.month, lastDate.day + n));
+        allData.add(StepsDayModel(date: fDate, steps: 0));
+      }
+    }
+    return allData;
+  }
+
   Future newActivity(String userName, String name, int goal, bool isStep,
       String endDate, String code) async {
     print(userName);
-    await FirebaseFirestore.instance.collection('activities').doc(name).set({
+    await activitiesInstance.doc(name).set({
       'goal': goal,
       'isStep': isStep,
       'endDate': endDate,
@@ -44,8 +79,7 @@ class DatabaseService {
       'code': code,
       'currentSteps': 0
     }).whenComplete(() {
-      return FirebaseFirestore.instance
-          .collection('activities')
+      return activitiesInstance
           .doc(name)
           .collection('members')
           .doc(_auth.getCurrentUser())
@@ -55,8 +89,7 @@ class DatabaseService {
 
   Future jGroup(String groupName, String name) async {
     print(name);
-    return await FirebaseFirestore.instance
-        .collection('activities')
+    return await activitiesInstance
         .doc(groupName)
         .collection('members')
         .doc(_auth.getCurrentUser())
@@ -64,24 +97,20 @@ class DatabaseService {
   }
 
   Future joinActivity(String name) async {
-    return await FirebaseFirestore.instance
-        .collection('users')
-        .doc(_auth.getCurrentUser())
-        .update({
+    return await usersInstance.doc(_auth.getCurrentUser()).update({
       'activities': FieldValue.arrayUnion([name])
     });
   }
 
   Future setSteps() async {
-    for (int i = 0; i < 32; i++) {
+    for (int i = 1; i < 32; i++) {
       Random random = new Random();
       int randNum = random.nextInt(5000) + 5000; // from 5000 upto 9999 included
 
       String date = DateFormat('yyyy-MM-dd')
           .format(DateTime.now().subtract(Duration(days: i)));
 
-      await FirebaseFirestore.instance
-          .collection('users')
+      await usersInstance
           .doc(_auth.getCurrentUser())
           .collection('steps')
           .doc(date)
@@ -92,8 +121,7 @@ class DatabaseService {
   }
 
   Future createFirstAchievement() async {
-    return await FirebaseFirestore.instance
-        .collection('users')
+    return await usersInstance
         .doc(_auth.getCurrentUser())
         .collection('achievements')
         .doc('register')
@@ -104,17 +132,14 @@ class DatabaseService {
   }
 
   Future<bool> usernameCheck(String username) async {
-    final result = await FirebaseFirestore.instance
-        .collection('users')
-        .where('userName', isEqualTo: username)
-        .get();
+    final result =
+        await usersInstance.where('userName', isEqualTo: username).get();
     return result.docs.isEmpty;
   }
 
   Future<String> ownAchievementCheck(achievement) async {
     String date;
-    final result = await FirebaseFirestore.instance
-        .collection('users')
+    final result = await usersInstance
         .doc(_auth.getCurrentUser())
         .collection('achievements')
         .where('ref', isEqualTo: achievement)
@@ -127,9 +152,7 @@ class DatabaseService {
   }
 
   Future<List<dynamic>> groups() async {
-    DocumentReference docRef = FirebaseFirestore.instance
-        .collection("users")
-        .doc(_auth.getCurrentUser());
+    DocumentReference docRef = usersInstance.doc(_auth.getCurrentUser());
     List<dynamic> activi = List<String>();
     return docRef.get().then((snapshot) {
       if (snapshot.exists) {
@@ -140,47 +163,36 @@ class DatabaseService {
   }
 
   Future<QuerySnapshot> get steps async {
-    return await FirebaseFirestore.instance
-        .collection('users')
+    return await usersInstance
         .doc(_auth.getCurrentUser())
         .collection('steps')
         .get();
   }
 
   Future<DocumentSnapshot> get user async {
-    return await FirebaseFirestore.instance
-        .collection('users')
-        .doc(_auth.getCurrentUser())
-        .get();
+    return await usersInstance.doc(_auth.getCurrentUser()).get();
   }
 
   Stream<DocumentSnapshot> get activities async* {
-    yield* FirebaseFirestore.instance
-        .collection('users')
-        .doc(_auth.getCurrentUser())
-        .snapshots();
+    yield* usersInstance.doc(_auth.getCurrentUser()).snapshots();
   }
 
   Stream<DocumentSnapshot> viewActivity(String name) async* {
-    yield* FirebaseFirestore.instance
-        .collection('activities')
-        .doc(name)
-        .snapshots();
+    yield* activitiesInstance.doc(name).snapshots();
   }
 
   Future<QuerySnapshot> get achievements {
-    return FirebaseFirestore.instance.collection('achievements').get();
+    return achievementsInstance.get();
   }
 
   Stream<QuerySnapshot> get userAchievements {
-    return FirebaseFirestore.instance
-        .collection('users')
+    return usersInstance
         .doc(_auth.getCurrentUser())
         .collection('achievements')
         .snapshots();
   }
 
-  Future<String> getToolImg(String imgName) async {
+  Future<String> getAchiImg(String imgName) async {
     final ref = FirebaseStorage.instance.ref().child(imgName);
     String url = await ref.getDownloadURL();
     return url;

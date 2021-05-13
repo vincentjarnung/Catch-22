@@ -25,20 +25,20 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  DatabaseService _db = DatabaseService();
-  AuthService _auth = AuthService();
+  final DatabaseService _db = DatabaseService();
+  final AuthService _auth = AuthService();
 
   List<StepsDayModel> tester = [];
   List<StepsDayModel> displaySteps = [];
 
   Stream<StepCount> _stepCountStream;
-
-  double steps;
-  double cSteps = 0;
-  int stepGoal;
-  String errorTxt = '';
-  DateTime cDate = DateTime.now();
-  bool hasData = false;
+  String _weekDates = '';
+  double _steps;
+  double _cSteps = 0;
+  int _stepGoal;
+  DateTime _cDate = DateTime.now();
+  int _week = 0;
+  bool _hasData = false;
   StateSetter _setter;
   int _pSteps = 0;
 
@@ -56,8 +56,7 @@ class _HomeState extends State<Home> {
     if (status.isGranted) {
       print('granted');
       _stepCountStream = Pedometer.stepCountStream;
-      _stepCountStream.listen(onStepCount).onError(onStepCountError);
-      print('hello');
+      _stepCountStream.listen(onStepCount, onError: onStepCountError);
     }
   }
 
@@ -70,15 +69,26 @@ class _HomeState extends State<Home> {
     print(event);
     setState(() {
       _pSteps = event.steps;
-      steps = _pSteps + cSteps;
-      print(steps);
+      _steps = _pSteps + _cSteps;
     });
+  }
+
+  _getStepsD() {
+    _db.getDateAndSteps().then((snapshot) => setState(() {
+          tester = snapshot;
+          if (displaySteps.length == 0) {
+            _lastWeekData(tester, DateTime.now());
+          }
+          _getSteps(DateTime.now());
+        }));
   }
 
   void initState() {
     super.initState();
+    if (!mounted) return;
+    _getWeekDates();
+    _getStepsD();
     _getPermission();
-    _getDateAndSteps();
     _getStepGoal().whenComplete(() {
       setState(() {});
     });
@@ -86,19 +96,21 @@ class _HomeState extends State<Home> {
 
   void _getSteps(DateTime date) {
     String fDate = formatter.format(date);
-
     for (int i = 0; i < tester.length; i++) {
       if (tester[i].date == fDate) {
-        cSteps = tester[i].steps;
-        hasData = true;
+        _cSteps = tester[i].steps;
+        _hasData = true;
         break;
       }
     }
     setState(() {
-      steps = cSteps + _pSteps;
-      cDate = date;
-      if (steps == null) hasData = false;
-      print(steps);
+      if (formatter.format(date) == formatter.format(DateTime.now())) {
+        _steps = _cSteps + _pSteps;
+      } else {
+        _steps = _cSteps;
+      }
+      _cDate = date;
+      if (_steps == null) _hasData = false;
     });
   }
 
@@ -150,7 +162,6 @@ class _HomeState extends State<Home> {
                                   onPressed: () {
                                     _setter(() {
                                       cStepGoal += 500;
-                                      print(stepGoal);
                                     });
                                   }),
                             ],
@@ -203,39 +214,32 @@ class _HomeState extends State<Home> {
     user.then((snapshot) {
       var userDoc = snapshot.data();
       setState(() {
-        stepGoal = userDoc['stepGoal'];
-        return stepGoal;
+        _stepGoal = userDoc['stepGoal'];
+        return _stepGoal;
       });
-    });
-  }
-
-  Future _getDateAndSteps() async {
-    Future<QuerySnapshot> steps = _db.steps;
-    steps.then((snapshot) {
-      snapshot.docs.forEach((doc) {
-        tester.add(
-            StepsDayModel(date: doc.id, steps: doc.data()['steps'].toDouble()));
-      });
-      print(displaySteps.length);
-      if (displaySteps.length == 0) {
-        _lastWeekData(tester, DateTime.now());
-      }
-      _getSteps(DateTime.now());
     });
   }
 
   void _lastWeekData(List<StepsDayModel> data, DateTime date) {
+    int change = DateTime.now().difference(date).inDays;
+
     displaySteps = [];
-    for (int i = 1; i < tester.length; i++) {
-      if (tester[i].date == formatter.format(DateTime.now())) {
-        for (int n = 6; n >= 0; n--) {
-          DateTime days = DateTime(date.year, date.month, date.day - n);
-          String dayOfWeek = DateFormat('EEEE').format(days);
-          String dayShort = dayOfWeek.substring(0, 3);
+    int i = data.length - 1 - change;
+
+    for (int n = 6; n >= 0; n--) {
+      if (i - n > 0) {
+        DateTime now = DateTime.now();
+        DateTime days = DateTime(date.year, date.month, date.day - n);
+        String dayOfWeek = DateFormat('EEEE').format(days);
+        String dayShort = dayOfWeek.substring(0, 3);
+
+        if (now.difference(days).inDays == 0) {
+          displaySteps.add(StepsDayModel(
+              date: dayShort, steps: data[i - n].steps + _pSteps));
+        } else {
           displaySteps
               .add(StepsDayModel(date: dayShort, steps: data[i - n].steps));
         }
-        break;
       }
     }
   }
@@ -249,7 +253,7 @@ class _HomeState extends State<Home> {
           centerTitle: true,
           actions: <Widget>[
             PopupMenuButton(
-                onSelected: (item) => _onSelected(context, item, stepGoal),
+                onSelected: (item) => _onSelected(context, item, _stepGoal),
                 itemBuilder: (context) => [
                       PopupMenuItem<int>(
                         value: 0,
@@ -302,11 +306,11 @@ class _HomeState extends State<Home> {
                     child: SfLinearGauge(
                       axisTrackStyle:
                           LinearAxisTrackStyle(color: Colors.grey[350]),
-                      maximum: stepGoal == null ? 100 : stepGoal.toDouble(),
+                      maximum: _stepGoal == null ? 100 : _stepGoal.toDouble(),
                       barPointers: [
                         LinearBarPointer(
                           enableAnimation: false,
-                          value: hasData ? steps : 0,
+                          value: _hasData ? _steps : 0,
                           color: ColorConstants.kSecoundaryColor,
                         )
                       ],
@@ -323,7 +327,7 @@ class _HomeState extends State<Home> {
                         Column(
                           children: [
                             Text(''),
-                            Text(hasData ? steps.toInt().toString() : '0',
+                            Text(_hasData ? _steps.toInt().toString() : '0',
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold, fontSize: 20))
                           ],
@@ -332,7 +336,7 @@ class _HomeState extends State<Home> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text('GOAL'),
-                            Text(stepGoal.toString(),
+                            Text(_stepGoal.toString(),
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold, fontSize: 20))
                           ],
@@ -343,24 +347,28 @@ class _HomeState extends State<Home> {
                 ],
               ),
             ),
-            ChangeDateWidget(
-                txt: formatter.format(cDate) == formatter.format(DateTime.now())
-                    ? 'Today'
-                    : formatter.format(cDate),
+            ChangeWeekWidget(
+                txt: Text(
+                    formatter.format(_cDate) == formatter.format(DateTime.now())
+                        ? 'Today'
+                        : formatter.format(_cDate),
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 25)),
                 addColor:
-                    formatter.format(cDate) == formatter.format(DateTime.now())
+                    formatter.format(_cDate) == formatter.format(DateTime.now())
                         ? Colors.grey
                         : null,
                 minus: () {
-                  cDate = DateTime(cDate.year, cDate.month, cDate.day - 1);
-                  _getSteps(cDate);
+                  _cDate = DateTime(_cDate.year, _cDate.month, _cDate.day - 1);
+                  _getSteps(_cDate);
                 },
-                add: formatter.format(cDate) == formatter.format(DateTime.now())
+                add: formatter.format(_cDate) ==
+                        formatter.format(DateTime.now())
                     ? null
                     : () {
-                        cDate =
-                            DateTime(cDate.year, cDate.month, cDate.day + 1);
-                        _getSteps(cDate);
+                        _cDate =
+                            DateTime(_cDate.year, _cDate.month, _cDate.day + 1);
+                        _getSteps(_cDate);
                       }),
             SizedBox(
               height: 20,
@@ -384,30 +392,54 @@ class _HomeState extends State<Home> {
               ),
             ),
             ChangeWeekWidget(
-                txt: 'Last 7 days',
-                addColor:
-                    formatter.format(cDate) == formatter.format(DateTime.now())
-                        ? Colors.grey
-                        : null,
-                minus: () {
-                  DateTime now = DateTime.now();
-                  DateTime date = DateTime(now.year, now.month, now.day - 7);
-                },
-                add: formatter.format(cDate) == formatter.format(DateTime.now())
+                txt: Text(
+                  _weekDates,
+                  style: TextStyle(fontSize: 15),
+                ),
+                addColor: _week == 0 ? Colors.grey : null,
+                minusColor:
+                    (tester.length - _week - 8) < 0 ? Colors.grey : null,
+                minus: (tester.length - _week - 8) < 0
                     ? null
                     : () {
+                        _week += 7;
+                        DateTime now = DateTime.now();
+                        DateTime date =
+                            DateTime(now.year, now.month, now.day - _week);
                         setState(() {
-                          DateTime now = DateTime.now();
-                          _lastWeekData(tester,
-                              DateTime(now.year, now.month, now.day + 7));
+                          _getWeekDates();
+                          _lastWeekData(tester, date);
+                        });
+                      },
+                add: _week == 0
+                    ? null
+                    : () {
+                        _week -= 7;
+                        DateTime now = DateTime.now();
+                        DateTime date =
+                            DateTime(now.year, now.month, now.day - _week);
+                        setState(() {
+                          _getWeekDates();
+                          _lastWeekData(tester, date);
                         });
                       }),
           ],
         )));
   }
-}
 
-abstract class AlertDialogCallback {
-  void onPositive(Object object);
-  void onNegative();
+  void _getWeekDates() {
+    DateTime now = DateTime.now();
+    DateTime startDate = DateTime(now.year, now.month, now.day - _week - 7);
+    DateTime endDate =
+        DateTime(startDate.year, startDate.month, startDate.day + 7);
+    if (endDate.month == startDate.month) {
+      _weekDates = DateFormat('dd').format(startDate) +
+          ' - ' +
+          DateFormat('dd MMMM').format(endDate);
+    } else {
+      _weekDates = DateFormat('dd MMMM').format(startDate) +
+          ' - ' +
+          DateFormat('dd MMMM').format(endDate);
+    }
+  }
 }

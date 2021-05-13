@@ -32,7 +32,7 @@ class _ViewAchievementsState extends State<ViewAchievements> {
       ),
       backgroundColor: Colors.grey[700],
       body: FutureBuilder(
-          future: _db.getToolImg(widget.ref),
+          future: _db.getAchiImg(widget.ref),
           builder: (context, snapshot) {
             if (!snapshot.hasData)
               return Center(

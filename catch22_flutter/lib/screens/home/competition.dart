@@ -100,12 +100,9 @@ class _CompetitionState extends State<Competition> {
                       height: 60,
                       onClick: () {
                         Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => SelectActivity()))
-                            .then((value) {
-                          setState(() {});
-                        });
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SelectActivity()));
                       },
                     ),
                   ],
