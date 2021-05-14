@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:catch22_flutter/charts/steps_chart.dart';
 import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:catch22_flutter/screens/home/add_activity.dart';
@@ -45,18 +47,31 @@ class _HomeState extends State<Home> {
   var formatter = new DateFormat('yyyy-MM-dd');
 
   Future _getPermission() async {
-    var status = await Permission.activityRecognition.status;
-
-    if (status.isDenied) {
-      print('denied');
-      await Permission.activityRecognition
-          .request()
-          .whenComplete(() => setState(() {}));
-    }
-    if (status.isGranted) {
-      print('granted');
-      _stepCountStream = Pedometer.stepCountStream;
-      _stepCountStream.listen(onStepCount, onError: onStepCountError);
+    if (Platform.isIOS) {
+      var status = await Permission.sensors.status;
+      print('IOS!!!');
+      if (status.isDenied) {
+        print('denied');
+        await Permission.sensors.request().whenComplete(() => setState(() {}));
+      }
+      if (status.isGranted) {
+        print('granted');
+        _stepCountStream = Pedometer.stepCountStream;
+        _stepCountStream.listen(onStepCount, onError: onStepCountError);
+      }
+    } else {
+      var status = await Permission.activityRecognition.status;
+      if (status.isDenied) {
+        print('denied');
+        await Permission.activityRecognition
+            .request()
+            .whenComplete(() => setState(() {}));
+      }
+      if (status.isGranted) {
+        print('granted');
+        _stepCountStream = Pedometer.stepCountStream;
+        _stepCountStream.listen(onStepCount, onError: onStepCountError);
+      }
     }
   }
 
