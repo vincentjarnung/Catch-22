@@ -29,7 +29,7 @@ class DatabaseService {
         .update({'stepGoal': stepGoal});
   }
 
-  Future updateSteps(int steps, String date) async {
+  Future updateSteps(int steps, String date, bool isLast) async {
     return await usersInstance
         .doc(_auth.getCurrentUser())
         .collection('steps')
@@ -43,6 +43,14 @@ class DatabaseService {
         .collection('steps')
         .doc(date)
         .update({'steps': FieldValue.increment(steps)});
+  }
+
+  Future getWalkedSteps() async {
+    return await usersInstance
+        .doc(_auth.getCurrentUser())
+        .collection('steps')
+        .where('isLast', isEqualTo: true)
+        .get();
   }
 
   Future<List<StepsDayModel>> getDateAndSteps() async {
@@ -103,18 +111,23 @@ class DatabaseService {
   }
 
   Future setSteps() async {
-    for (int i = 1; i < 32; i++) {
+    for (int i = 0; i < 32; i++) {
       Random random = new Random();
       int randNum = random.nextInt(5000) + 5000; // from 5000 upto 9999 included
+      bool isLastAddedData = false;
 
       String date = DateFormat('yyyy-MM-dd')
           .format(DateTime.now().subtract(Duration(days: i)));
+      if (i == 0) {
+        randNum = 0;
+        isLastAddedData = true;
+      }
 
       await usersInstance
           .doc(_auth.getCurrentUser())
           .collection('steps')
           .doc(date)
-          .set({'steps': randNum})
+          .set({'steps': randNum, 'isLast': isLastAddedData})
           .then((value) => print('Data Added'))
           .catchError((error) => (print('Error: ' + error)));
     }

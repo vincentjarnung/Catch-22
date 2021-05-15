@@ -34,6 +34,7 @@ class _HomeState extends State<Home> {
   List<StepsDayModel> displaySteps = [];
 
   Stream<StepCount> _stepCountStream;
+  StreamSubscription<StepCount> _subscription;
   String _weekDates = '';
   double _steps;
   double _cSteps = 0;
@@ -70,7 +71,8 @@ class _HomeState extends State<Home> {
       if (status.isGranted) {
         print('granted');
         _stepCountStream = Pedometer.stepCountStream;
-        _stepCountStream.listen(onStepCount, onError: onStepCountError);
+        _subscription =
+            _stepCountStream.listen(onStepCount, onError: onStepCountError);
       }
     }
   }
@@ -80,11 +82,29 @@ class _HomeState extends State<Home> {
     setState(() {});
   }
 
-  void onStepCount(StepCount event) {
+  Future<int> onStepCount(StepCount event) async {
+    var savedData = await _db.getWalkedSteps();
+    int walkedSteps = 0;
+    int todaySteps;
+    String lastDate;
+
+    savedData.docs.forEach((element) {
+      walkedSteps += element.data()['steps'];
+      lastDate = element.id;
+    });
+
+    print(walkedSteps);
+    print(lastDate);
+    String todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    if (lastDate != todayDate) {
+      _db.updateSteps(event.steps - walkedSteps, todayDate, true);
+    }
+
     print(event);
     setState(() {
-      _pSteps = event.steps;
-      _steps = _pSteps + _cSteps;
+      todaySteps = event.steps - walkedSteps;
+      _pSteps = todaySteps;
+      _steps = todaySteps + _cSteps;
     });
   }
 
@@ -109,6 +129,16 @@ class _HomeState extends State<Home> {
     });
   }
 
+  @override
+  void dispose() {
+    stopListening();
+    super.dispose();
+  }
+
+  void stopListening() {
+    _subscription.cancel();
+  }
+
   void _getSteps(DateTime date) {
     String fDate = formatter.format(date);
     for (int i = 0; i < tester.length; i++) {
@@ -120,7 +150,7 @@ class _HomeState extends State<Home> {
     }
     setState(() {
       if (formatter.format(date) == formatter.format(DateTime.now())) {
-        _steps = _cSteps + _pSteps;
+        _steps = _pSteps.toDouble();
       } else {
         _steps = _cSteps;
       }
@@ -368,7 +398,7 @@ class _HomeState extends State<Home> {
                         ? 'Today'
                         : formatter.format(_cDate),
                     style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 25)),
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
                 addColor:
                     formatter.format(_cDate) == formatter.format(DateTime.now())
                         ? Colors.grey
