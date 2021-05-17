@@ -28,7 +28,7 @@ class _AddActivityState extends State<AddActivity> {
     SportsModel(4000, 'Tennis'),
   ];
   DateTime _firstDate = DateTime.now().subtract(Duration(days: 350));
-  DateTime _lastDate = DateTime.now().add(Duration(days: 350));
+  DateTime _lastDate = DateTime.now().add(Duration(hours: 1));
   DateTime _selectedDate = DateTime.now();
   Color selectedDateStyleColor = Colors.blue;
   Color selectedSingleDateDecorationColor = Colors.red;

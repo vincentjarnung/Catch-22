@@ -17,6 +17,20 @@ class _CompetitionState extends State<Competition> {
   final DatabaseService _db = DatabaseService();
 
   @override
+  void initState() {
+    super.initState();
+    if (!mounted) return;
+    _updateGroups();
+  }
+
+  void _updateGroups() async {
+    List groups = await _db.getGroups();
+    groups.forEach((group) {
+      _db.setMemStep(group);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot>(
         stream: _db.activities,
@@ -25,6 +39,7 @@ class _CompetitionState extends State<Competition> {
             return CircularProgressIndicator();
           }
           List list = snapshot.data['activities'];
+
           return Scaffold(
             appBar: AppBar(
               leading: Container(),
@@ -60,15 +75,14 @@ class _CompetitionState extends State<Competition> {
                                     height: 40,
                                     width: 70,
                                   ),
-                                  titel: list[index],
+                                  code: list[index],
                                   groupType: 'Goal',
                                   onClick: () {
-                                    print('click');
                                     Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                             builder: (builder) => ActivityView(
-                                                aName: list[index])));
+                                                code: list[index])));
                                   },
                                 ),
                               ),

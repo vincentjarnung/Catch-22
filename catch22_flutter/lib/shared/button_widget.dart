@@ -20,7 +20,7 @@ class ButtonWidget extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
           border: hasBorder
-              ? Border.all(color: ColorConstants.kPrimaryColor, width: 3.0)
+              ? Border.all(color: ColorConstants.kyellow, width: 3.0)
               : Border.fromBorderSide(BorderSide.none),
           borderRadius: BorderRadius.circular(20.0),
           color: hasBorder ? Colors.white : ColorConstants.kyellow),

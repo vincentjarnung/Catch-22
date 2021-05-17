@@ -12,6 +12,8 @@ class DatabaseService {
   var activitiesInstance = FirebaseFirestore.instance.collection('activities');
   var achievementsInstance =
       FirebaseFirestore.instance.collection('achievements');
+  var activitiesCompInstance =
+      FirebaseFirestore.instance.collection('activitiesComp');
 
   Future newUserData(
       String userName, String email, String uid, int stepGoal) async {
@@ -34,7 +36,7 @@ class DatabaseService {
         .doc(_auth.getCurrentUser())
         .collection('steps')
         .doc(date)
-        .update({'steps': steps});
+        .set({'steps': steps, 'isLast': isLast, 'addedSteps': 0});
   }
 
   Future addActivity(String date, int steps) async {
@@ -42,7 +44,7 @@ class DatabaseService {
         .doc(_auth.getCurrentUser())
         .collection('steps')
         .doc(date)
-        .update({'steps': FieldValue.increment(steps)});
+        .update({'addedSteps': FieldValue.increment(steps)});
   }
 
   Future getWalkedSteps() async {
@@ -57,56 +59,199 @@ class DatabaseService {
     List<StepsDayModel> allData = [];
     await steps.then((snapshot) {
       snapshot.docs.forEach((doc) {
-        allData.add(
-            StepsDayModel(date: doc.id, steps: doc.data()['steps'].toDouble()));
+        allData.add(StepsDayModel(
+            date: doc.id,
+            steps:
+                (doc.data()['steps'] + doc.data()['addedSteps']).toDouble()));
       });
     });
-    if (allData.length != 0) {
-      print(allData.length);
-      DateTime now = DateTime.now();
-      DateTime lastDate = DateTime.parse(allData[allData.length - 1].date);
-      int diff = now.difference(lastDate).inDays;
-
-      for (int n = 1; n <= diff; n++) {
-        String fDate = DateFormat('yyyy-MM-dd')
-            .format(DateTime(lastDate.year, lastDate.month, lastDate.day + n));
-        allData.add(StepsDayModel(date: fDate, steps: 0));
-      }
-    }
     return allData;
   }
 
-  Future newActivity(String userName, String name, int goal, bool isStep,
-      String endDate, String code) async {
-    print(userName);
-    await activitiesInstance.doc(name).set({
+  Future newActivity(String name, int goal, String endDate, String code) async {
+    await activitiesInstance.doc(code).set({
+      'groupName': name,
       'goal': goal,
-      'isStep': isStep,
       'endDate': endDate,
       'startDate': DateFormat('yyyy-MM-dd').format(DateTime.now()),
       'code': code,
-      'currentSteps': 0
+      'currentSteps': 0,
+      'todaysSteps': 0
     }).whenComplete(() {
-      return activitiesInstance
-          .doc(name)
-          .collection('members')
-          .doc(_auth.getCurrentUser())
-          .set({'userName': userName});
+      print('done');
+      setMemStep(code);
     });
   }
 
-  Future jGroup(String groupName, String name) async {
-    print(name);
-    return await activitiesInstance
-        .doc(groupName)
-        .collection('members')
-        .doc(_auth.getCurrentUser())
-        .set({'userName': name});
+  Future<List> getGroups() async {
+    List codes;
+    var user = await usersInstance.doc(_auth.getCurrentUser()).get();
+    codes = user.data()['activities'];
+    print(codes);
+    return codes;
   }
 
-  Future joinActivity(String name) async {
+  Future<String> getGroupName(String code) async {
+    var group = await activitiesInstance.doc(code).get();
+    var groupComp = await activitiesCompInstance.doc(code).get();
+    try {
+      return group.data()['groupName'];
+    } catch (e) {
+      return groupComp.data()['groupName'];
+    }
+  }
+
+  Future setMemStep(String code) async {
+    String userName = await getUserName();
+    var group = await activitiesInstance.doc(code).get();
+    var curGroup = await activitiesInstance
+        .doc(code)
+        .collection('members')
+        .doc(userName)
+        .get();
+    int diff;
+    String start;
+    try {
+      start = group.data()['startDate'];
+    } catch (e) {
+      return setCompMemStep(code);
+    }
+
+    await steps.then((snapshot) {
+      snapshot.docs.forEach((doc) async {
+        DateTime date = DateTime.parse(doc.id);
+        DateTime startDate = DateTime.parse(start);
+
+        diff = date.difference(startDate).inDays;
+        if (diff >= 0) {
+          var alredyData;
+          try {
+            alredyData = curGroup.data()[doc.id];
+          } catch (e) {
+            alredyData = null;
+          }
+
+          var uSteps = doc.data()['steps'] + doc.data()['addedSteps'];
+
+          if (alredyData == null) {
+            await activitiesInstance
+                .doc(code)
+                .collection('members')
+                .doc(userName)
+                .set({doc.id: doc.data()['steps'] + doc.data()['addedSteps']});
+            _setGroupSteps(
+                code, doc.data()['steps'] + doc.data()['addedSteps']);
+          } else if (alredyData < uSteps) {
+            await activitiesInstance
+                .doc(code)
+                .collection('members')
+                .doc(userName)
+                .update({doc.id: FieldValue.increment(uSteps - alredyData)});
+            _setGroupSteps(code, uSteps - alredyData);
+          }
+        }
+      });
+    }).whenComplete(() {
+      if (diff == -1) {
+        activitiesInstance
+            .doc(code)
+            .collection('members')
+            .doc(userName)
+            .set({DateFormat('yyyy-MM-dd').format(DateTime.now()): 0});
+      }
+    });
+  }
+
+  Future _setGroupSteps(String code, int val) async {
+    return await activitiesInstance
+        .doc(code)
+        .update({'currentSteps': FieldValue.increment(val)});
+  }
+
+  Future newCompActivity(
+      String name, bool isStep, String endDate, String code) async {
+    await activitiesCompInstance.doc(code).set({
+      'groupName': name,
+      'endDate': endDate,
+      'isStep': isStep,
+      'startDate': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      'code': code,
+    }).whenComplete(() {
+      print('done');
+      setCompMemStep(code);
+    });
+  }
+
+  Future setCompMemStep(String code) async {
+    String userName = await getUserName();
+
+    var group = await activitiesCompInstance.doc(code).get();
+    var curGroup = await activitiesCompInstance
+        .doc(code)
+        .collection('members')
+        .doc(userName)
+        .get();
+    int diff;
+    String start = group.data()['startDate'];
+
+    await steps.then((snapshot) {
+      snapshot.docs.forEach((doc) async {
+        DateTime date = DateTime.parse(doc.id);
+        DateTime startDate = DateTime.parse(start);
+
+        diff = date.difference(startDate).inDays;
+        print(diff);
+        if (diff >= 0) {
+          var alredyData;
+          try {
+            alredyData = curGroup.data()[doc.id];
+          } catch (e) {
+            alredyData = null;
+          }
+
+          var uSteps = doc.data()['steps'] + doc.data()['addedSteps'];
+          print(alredyData);
+          if (alredyData == null) {
+            await activitiesCompInstance
+                .doc(code)
+                .collection('members')
+                .doc(userName)
+                .set({doc.id: doc.data()['steps'] + doc.data()['addedSteps']});
+          } else if (alredyData < uSteps) {
+            await activitiesCompInstance
+                .doc(code)
+                .collection('members')
+                .doc(userName)
+                .update({doc.id: FieldValue.increment(uSteps - alredyData)});
+          }
+        }
+      });
+    }).whenComplete(() {
+      if (diff == -1) {
+        activitiesInstance
+            .doc(code)
+            .collection('members')
+            .doc(userName)
+            .set({DateFormat('yyyy-MM-dd').format(DateTime.now()): 0});
+      }
+    });
+  }
+
+  Future<String> getUserName() async {
+    String userName;
+    DocumentReference docRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(_auth.getCurrentUser());
+    await docRef.get().then((value) {
+      userName = value.data()['userName'];
+    });
+
+    return userName;
+  }
+
+  Future joinActivity(String code) async {
     return await usersInstance.doc(_auth.getCurrentUser()).update({
-      'activities': FieldValue.arrayUnion([name])
+      'activities': FieldValue.arrayUnion([code])
     });
   }
 
@@ -127,7 +272,7 @@ class DatabaseService {
           .doc(_auth.getCurrentUser())
           .collection('steps')
           .doc(date)
-          .set({'steps': randNum, 'isLast': isLastAddedData})
+          .set({'steps': randNum, 'isLast': isLastAddedData, 'addedSteps': 0})
           .then((value) => print('Data Added'))
           .catchError((error) => (print('Error: ' + error)));
     }

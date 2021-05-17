@@ -5,9 +5,9 @@ import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class ActivityView extends StatefulWidget {
-  final String aName;
+  final String code;
 
-  ActivityView({@required this.aName});
+  ActivityView({@required this.code});
 
   @override
   _ActivityViewState createState() => _ActivityViewState();
@@ -20,6 +20,18 @@ class _ActivityViewState extends State<ActivityView> {
   double todayStepGoal;
   double todayCurStep;
   int daysLeft;
+  String title = '';
+
+  Future _getGroupName() async {
+    title =
+        await _db.getGroupName(widget.code).whenComplete(() => setState(() {}));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getGroupName();
+  }
 
   int _getDaysLeft(String end) {
     DateTime endDate = DateTime.parse(end);
@@ -31,7 +43,6 @@ class _ActivityViewState extends State<ActivityView> {
     String s = numb.toString();
 
     for (int i = 1, n = s.length - 1; i < s.length; i++, n--) {
-      print(i);
       if (i % 3 == 0) {
         String sub = s.substring(n);
         s = s.replaceRange(n, s.length, ' ' + sub);
@@ -42,11 +53,11 @@ class _ActivityViewState extends State<ActivityView> {
 
   @override
   Widget build(BuildContext context) {
-    print(widget.aName);
+    print(widget.code);
     double heightOfScreen = MediaQuery.of(context).size.height;
     double widthOfScreen = MediaQuery.of(context).size.width;
     return StreamBuilder(
-        stream: _db.viewActivity(widget.aName),
+        stream: _db.viewActivity(widget.code),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return CircularProgressIndicator();
@@ -59,7 +70,7 @@ class _ActivityViewState extends State<ActivityView> {
             todayCurStep = (totCurSteps ~/ daysLeft).toDouble();
             return Scaffold(
               appBar: AppBar(
-                title: Text(widget.aName),
+                title: Text(title),
                 centerTitle: true,
               ),
               body: SingleChildScrollView(
@@ -123,7 +134,9 @@ class _ActivityViewState extends State<ActivityView> {
                               Column(
                                 children: [
                                   Text(''),
-                                  Text(totCurSteps.toInt().toString(),
+                                  Text(
+                                      _formatNumber(totCurSteps.toInt())
+                                          .toString(),
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 20))
@@ -133,7 +146,9 @@ class _ActivityViewState extends State<ActivityView> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text('GOAL'),
-                                  Text(totStepGoal.toInt().toString(),
+                                  Text(
+                                      _formatNumber(totStepGoal.toInt())
+                                          .toString(),
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 20))

@@ -13,21 +13,12 @@ class JoinGroup extends StatefulWidget {
 
 class _JoinGroupState extends State<JoinGroup> {
   final DatabaseService _db = DatabaseService();
-  final AuthService _auth = AuthService();
+
   String code = '';
   String error = '';
-  String userName;
+
   String aName;
   bool exists;
-
-  Future _getUserName() async {
-    DocumentReference docRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(_auth.getCurrentUser());
-    return await docRef.get().then((value) {
-      userName = value.data()['userName'];
-    });
-  }
 
   Future codeExist(String code) async {
     return await FirebaseFirestore.instance
@@ -103,12 +94,10 @@ class _JoinGroupState extends State<JoinGroup> {
                       codeExist(code).whenComplete(() {
                         if (aName != null) {
                           print(code);
-                          _getUserName().whenComplete(() {
-                            print(userName);
-                            _db.jGroup(aName, userName).whenComplete(() => _db
-                                .joinActivity(aName)
-                                .whenComplete(() => _showAlertDialog(context)));
-                          });
+
+                          _db.setMemStep(aName).whenComplete(() => _db
+                              .joinActivity(code)
+                              .whenComplete(() => _showAlertDialog(context)));
                         } else {
                           setState(() {
                             error = 'No group found';

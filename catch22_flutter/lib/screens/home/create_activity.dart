@@ -74,7 +74,12 @@ class SelectActivity extends StatelessWidget {
               width: width - 70,
               icon: Icon(Icons.add),
               text: 'Create a Competition Activity',
-              onClick: () {},
+              onClick: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => CompetitionActivity()));
+              },
             ),
           ],
         ),
@@ -90,13 +95,10 @@ class GoalActivity extends StatefulWidget {
 
 class _GoalActivityState extends State<GoalActivity> {
   final DatabaseService _db = DatabaseService();
-  final AuthService _auth = AuthService();
-  String userName;
+
   int stepGoal = 100000;
   int improvmentGoal = 25;
   bool hasSel = true;
-  bool isStep = true;
-  int _value = 1;
   String actName = '';
   String error = '';
   String code;
@@ -118,15 +120,6 @@ class _GoalActivityState extends State<GoalActivity> {
     // TODO: implement initState
     super.initState();
     setState(() {});
-  }
-
-  Future _getUserName() async {
-    DocumentReference docRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(_auth.getCurrentUser());
-    docRef.get().then((value) {
-      userName = value.data()['userName'];
-    });
   }
 
   @override
@@ -171,74 +164,26 @@ class _GoalActivityState extends State<GoalActivity> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(30, 5, 30, 15),
                 child: Text(
-                  'Chose between Step or Improvment Goal',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  'Set Step Goal',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
               ),
-              DropdownButton(
-                  hint: Text(
-                    'Select',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  value: _value,
-                  items: [
-                    DropdownMenuItem(
-                      child: Text(
-                        'Step Goal',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      value: 1,
-                    ),
-                    DropdownMenuItem(
-                      child: Text(
-                        'Improvment Goal',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                      ),
-                      value: 2,
-                    )
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _value = value;
-                      if (value == 1)
-                        isStep = true;
-                      else
-                        isStep = false;
-                    });
-                  }),
               SizedBox(
-                height: 20,
+                height: 10,
               ),
               ChangeDateWidget(
-                txt: isStep
-                    ? stepGoal.toString()
-                    : improvmentGoal.toString() + '%',
-                minus: () {
-                  if (isStep) {
+                  txt: stepGoal.toString(),
+                  minus: () {
                     setState(() {
                       stepGoal -= 1000;
                     });
-                  } else {
-                    setState(() {
-                      improvmentGoal -= 5;
-                    });
-                  }
-                },
-                add: () {
-                  if (isStep) {
+                  },
+                  add: () {
                     setState(() {
                       stepGoal += 1000;
                     });
-                  } else {
-                    setState(() {
-                      improvmentGoal += 5;
-                    });
-                  }
-                },
-              ),
+                  }),
               Padding(
                 padding: const EdgeInsets.all(30.0),
                 child: Text(
@@ -283,7 +228,8 @@ class _GoalActivityState extends State<GoalActivity> {
                     setState(() {
                       error = 'Enter a valid activity name';
                     });
-                  } else if (!(actName == null || actName == '') ||
+                  }
+                  if (!(actName == null || actName == '') &&
                       !(DateFormat('yyyy-MM-dd').format(_selectedDate) ==
                           DateFormat('yyyy-MM-dd').format(DateTime.now()))) {
                     code = getRandomString(5);
@@ -330,23 +276,260 @@ class _GoalActivityState extends State<GoalActivity> {
                     hasBorder: false,
                     height: 30,
                     width: 120,
-                    onClick: () {
+                    onClick: () async {
+                      print(DateFormat('yyyy-MM-dd').format(_selectedDate));
+                      print(stepGoal);
+                      print(actName);
+
+                      _db
+                          .newActivity(
+                              actName,
+                              stepGoal,
+                              DateFormat('yyyy-MM-dd').format(_selectedDate),
+                              code)
+                          .whenComplete(() => _db.joinActivity(code));
+
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+  }
+
+  void _onSelectedDateChanged(DateTime newDate) {
+    setState(() {
+      _selectedDate = newDate;
+      print(DateFormat('yyyy-MM-dd').format(_selectedDate));
+    });
+  }
+}
+
+class CompetitionActivity extends StatefulWidget {
+  @override
+  _CompetitionActivityState createState() => _CompetitionActivityState();
+}
+
+class _CompetitionActivityState extends State<CompetitionActivity> {
+  final DatabaseService _db = DatabaseService();
+
+  int stepGoal = 100000;
+  int improvmentGoal = 25;
+  bool hasSel = true;
+  bool isStep = true;
+  int _value = 1;
+  String actName = '';
+  String error = '';
+  String code;
+  DateTime _firstDate = DateTime.now();
+  DateTime _lastDate = DateTime.now().add(Duration(days: 350));
+  DateTime _selectedDate = DateTime.now();
+  Color selectedDateStyleColor = Colors.black;
+  Color selectedSingleDateDecorationColor = ColorConstants.kPrimaryColor;
+
+  static const _chars =
+      'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
+  Random _rnd = Random();
+
+  String getRandomString(int length) => String.fromCharCodes(Iterable.generate(
+      length, (_) => _chars.codeUnitAt(_rnd.nextInt(_chars.length))));
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    dp.DatePickerRangeStyles styles = dp.DatePickerRangeStyles(
+      selectedDateStyle: Theme.of(context)
+          .accentTextTheme
+          .bodyText1
+          ?.copyWith(color: selectedDateStyleColor),
+      selectedSingleDateDecoration: BoxDecoration(
+          color: selectedSingleDateDecorationColor, shape: BoxShape.circle),
+    );
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Competition Activity'),
+        centerTitle: true,
+      ),
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).requestFocus(new FocusNode());
+        },
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20.0, 20, 20, 5),
+                child: TextFieldWidget(
+                  isEmail: false,
+                  isLast: true,
+                  obscureText: false,
+                  hintText: 'Name Activity',
+                  onChanged: (val) {
+                    actName = val;
+                  },
+                ),
+              ),
+              Text(
+                error,
+                style: TextStyle(color: Colors.red),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(30, 5, 30, 15),
+                child: Text(
+                  'Chose between Step or Improvment Competition',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ButtonWidget(
+                      hasBorder: !isStep,
+                      width: 150,
+                      text: 'Step',
+                      onClick: () {
+                        setState(
+                          () {
+                            isStep = true;
+                          },
+                        );
+                      }),
+                  ButtonWidget(
+                      hasBorder: isStep,
+                      width: 150,
+                      text: 'Improvment',
+                      onClick: () {
+                        setState(
+                          () {
+                            isStep = false;
+                          },
+                        );
+                      })
+                ],
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(30.0),
+                child: Text(
+                  'Select an end date for the Activity',
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: hasSel ? Colors.black : Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Container(
+                height: 300,
+                width: 300,
+                child: dp.DayPicker.single(
+                  selectedDate: _selectedDate,
+                  onChanged: _onSelectedDateChanged,
+                  firstDate: _firstDate,
+                  lastDate: _lastDate,
+                  datePickerStyles: styles,
+                  datePickerLayoutSettings: dp.DatePickerLayoutSettings(
+                      maxDayPickerRowCount: 2,
+                      showPrevMonthEnd: true,
+                      showNextMonthStart: true),
+                ),
+              ),
+              SizedBox(
+                height: 30,
+              ),
+              ImageButtonWidget(
+                icon: Icon(Icons.add),
+                text: 'Create Activity',
+                width: 200,
+                onClick: () {
+                  if (DateFormat('yyyy-MM-dd').format(_selectedDate) ==
+                      DateFormat('yyyy-MM-dd').format(DateTime.now())) {
+                    setState(() {
+                      hasSel = false;
+                    });
+                  }
+                  if (actName == null || actName == '') {
+                    setState(() {
+                      error = 'Enter a valid activity name';
+                    });
+                  }
+                  if (!(actName == null || actName == '') &&
+                      !(DateFormat('yyyy-MM-dd').format(_selectedDate) ==
+                          DateFormat('yyyy-MM-dd').format(DateTime.now()))) {
+                    code = getRandomString(5);
+                    _showAlertDialog(context);
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAlertDialog(BuildContext context) {
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: Container(
+              width: 200,
+              height: 175,
+              child: Column(
+                children: [
+                  Text(
+                    'Congratulations, you have created a new activity. Here is the code for inviting others to the activity:',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  Text(
+                    code,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  ButtonWidget(
+                    text: 'Continue',
+                    hasBorder: false,
+                    height: 30,
+                    width: 120,
+                    onClick: () async {
                       print(isStep);
-                      if (isStep) {
-                        print(DateFormat('yyyy-MM-dd').format(_selectedDate));
-                        print(stepGoal);
-                        print(actName);
-                        _getUserName();
-                        _db
-                            .newActivity(
-                                userName,
-                                actName,
-                                stepGoal,
-                                isStep,
-                                DateFormat('yyyy-MM-dd').format(_selectedDate),
-                                code)
-                            .whenComplete(() => _db.joinActivity(actName));
-                      }
+
+                      print(DateFormat('yyyy-MM-dd').format(_selectedDate));
+                      print(stepGoal);
+                      print(actName);
+
+                      _db
+                          .newCompActivity(
+                              actName,
+                              isStep,
+                              DateFormat('yyyy-MM-dd').format(_selectedDate),
+                              code)
+                          .whenComplete(() => _db.joinActivity(code));
+
                       Navigator.pop(context);
                       Navigator.pop(context);
                       Navigator.pop(context);

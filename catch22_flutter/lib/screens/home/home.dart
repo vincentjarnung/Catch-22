@@ -36,12 +36,11 @@ class _HomeState extends State<Home> {
   Stream<StepCount> _stepCountStream;
   StreamSubscription<StepCount> _subscription;
   String _weekDates = '';
-  double _steps;
+  double _steps = 0;
   double _cSteps = 0;
   int _stepGoal;
   DateTime _cDate = DateTime.now();
   int _week = 0;
-  bool _hasData = false;
   StateSetter _setter;
   int _pSteps = 0;
 
@@ -73,6 +72,11 @@ class _HomeState extends State<Home> {
         _stepCountStream = Pedometer.stepCountStream;
         _subscription =
             _stepCountStream.listen(onStepCount, onError: onStepCountError);
+        _getStepsD().whenComplete(() {
+          _getSteps(DateTime.now());
+          _lastWeekData(tester, DateTime.now());
+          _getWeekDates();
+        });
       }
     }
   }
@@ -82,7 +86,7 @@ class _HomeState extends State<Home> {
     setState(() {});
   }
 
-  Future<int> onStepCount(StepCount event) async {
+  Future onStepCount(StepCount event) async {
     var savedData = await _db.getWalkedSteps();
     int walkedSteps = 0;
     int todaySteps;
@@ -93,40 +97,44 @@ class _HomeState extends State<Home> {
       lastDate = element.id;
     });
 
-    print(walkedSteps);
-    print(lastDate);
     String todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    if (lastDate != todayDate) {
-      _db.updateSteps(event.steps - walkedSteps, todayDate, true);
+    DateTime now = DateTime.now();
+    int diff =
+        DateTime.parse(todayDate).difference(DateTime.parse(lastDate)).inDays -
+            1;
+
+    if (diff > 0) {
+      int loc = diff;
+      for (; diff > 0; diff--) {
+        String yesterday = DateFormat('yyyy-MM-dd')
+            .format(DateTime(now.year, now.month, now.day - (diff)));
+
+        await _db.updateSteps(
+            (event.steps - walkedSteps) ~/ (loc), yesterday, true);
+      }
     }
 
-    print(event);
+    todaySteps = event.steps - walkedSteps;
+    _pSteps = todaySteps;
     setState(() {
-      todaySteps = event.steps - walkedSteps;
-      _pSteps = todaySteps;
-      _steps = todaySteps + _cSteps;
+      _steps = todaySteps.toDouble() + _cSteps;
     });
+    print('first ' + todaySteps.toString());
+    return todaySteps;
   }
 
-  _getStepsD() {
-    _db.getDateAndSteps().then((snapshot) => setState(() {
+  Future _getStepsD() async {
+    return await _db.getDateAndSteps().then((snapshot) => setState(() {
+          print('first');
           tester = snapshot;
-          if (displaySteps.length == 0) {
-            _lastWeekData(tester, DateTime.now());
-          }
-          _getSteps(DateTime.now());
         }));
   }
 
   void initState() {
     super.initState();
-    if (!mounted) return;
-    _getWeekDates();
-    _getStepsD();
     _getPermission();
-    _getStepGoal().whenComplete(() {
-      setState(() {});
-    });
+    _getStepGoal();
+    if (!mounted) return;
   }
 
   @override
@@ -141,21 +149,21 @@ class _HomeState extends State<Home> {
 
   void _getSteps(DateTime date) {
     String fDate = formatter.format(date);
-    for (int i = 0; i < tester.length; i++) {
+    for (int i = tester.length - 1; i >= 0; i--) {
       if (tester[i].date == fDate) {
         _cSteps = tester[i].steps;
-        _hasData = true;
+
         break;
       }
     }
+    print('secound');
     setState(() {
       if (formatter.format(date) == formatter.format(DateTime.now())) {
-        _steps = _pSteps.toDouble();
+        _steps = _pSteps.toDouble() + _cSteps;
       } else {
         _steps = _cSteps;
       }
       _cDate = date;
-      if (_steps == null) _hasData = false;
     });
   }
 
@@ -270,18 +278,27 @@ class _HomeState extends State<Home> {
 
     displaySteps = [];
     int i = data.length - 1 - change;
+    if (formatter.format(date) == formatter.format(DateTime.now())) {
+      for (int n = 6; n >= 0; n--) {
+        if (i - n > 0) {
+          DateTime days = DateTime(date.year, date.month, date.day - n);
+          String dayOfWeek = DateFormat('EEEE').format(days);
+          String dayShort = dayOfWeek.substring(0, 3);
+          displaySteps
+              .add(StepsDayModel(date: dayShort, steps: data[i - n].steps));
+        }
+      }
+      print(_cSteps);
+      displaySteps.add(StepsDayModel(
+          date: DateFormat('EEEE').format(DateTime.now()).substring(0, 3),
+          steps: _pSteps.toDouble() + _cSteps));
+    } else {
+      for (int n = 6; n >= 0; n--) {
+        if (i - n > 0) {
+          DateTime days = DateTime(date.year, date.month, date.day - n);
+          String dayOfWeek = DateFormat('EEEE').format(days);
+          String dayShort = dayOfWeek.substring(0, 3);
 
-    for (int n = 6; n >= 0; n--) {
-      if (i - n > 0) {
-        DateTime now = DateTime.now();
-        DateTime days = DateTime(date.year, date.month, date.day - n);
-        String dayOfWeek = DateFormat('EEEE').format(days);
-        String dayShort = dayOfWeek.substring(0, 3);
-
-        if (now.difference(days).inDays == 0) {
-          displaySteps.add(StepsDayModel(
-              date: dayShort, steps: data[i - n].steps + _pSteps));
-        } else {
           displaySteps
               .add(StepsDayModel(date: dayShort, steps: data[i - n].steps));
         }
@@ -355,7 +372,7 @@ class _HomeState extends State<Home> {
                       barPointers: [
                         LinearBarPointer(
                           enableAnimation: false,
-                          value: _hasData ? _steps : 0,
+                          value: _steps,
                           color: ColorConstants.kSecoundaryColor,
                         )
                       ],
@@ -372,7 +389,7 @@ class _HomeState extends State<Home> {
                         Column(
                           children: [
                             Text(''),
-                            Text(_hasData ? _steps.toInt().toString() : '0',
+                            Text(_steps.toInt().toString(),
                                 style: TextStyle(
                                     fontWeight: FontWeight.bold, fontSize: 20))
                           ],

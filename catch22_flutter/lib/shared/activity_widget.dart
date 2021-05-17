@@ -1,26 +1,46 @@
+import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/back_img_button_widget.dart';
 import 'package:catch22_flutter/shared/constants/color_constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class ActivityWidget extends StatelessWidget {
-  final String titel;
+class ActivityWidget extends StatefulWidget {
+  final String code;
   final Image img;
   final Function leaveActivity;
   final Function onClick;
   final String groupType;
 
   ActivityWidget(
-      {@required this.titel,
+      {@required this.code,
       @required this.img,
       this.leaveActivity,
       this.onClick,
       @required this.groupType});
 
   @override
+  _ActivityWidgetState createState() => _ActivityWidgetState();
+}
+
+class _ActivityWidgetState extends State<ActivityWidget> {
+  final DatabaseService _db = DatabaseService();
+  String title = '';
+  Future _getGroupName() async {
+    title =
+        await _db.getGroupName(widget.code).whenComplete(() => setState(() {}));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _getGroupName();
+  }
+
+  List groups = [];
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onClick,
+      onTap: widget.onClick,
       child: Container(
         height: 70,
         width: 340,
@@ -33,39 +53,15 @@ class ActivityWidget extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(40, 4, 0, 0),
               child: Column(
-                children: [img, Text(groupType)],
+                children: [widget.img, Text(widget.groupType)],
               ),
             ),
             Expanded(
                 child: Text(
-              titel,
+              title,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             )),
-
-            /*Padding(
-              padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-              child: Container(
-                decoration: BoxDecoration(
-                    border: Border.fromBorderSide(BorderSide.none),
-                    borderRadius: BorderRadius.circular(20.0),
-                    color: Colors.red[700]),
-                height: 70,
-                width: 92,
-                child: FlatButton.icon(
-                  icon: Icon(Icons.cancel),
-                  splashColor: Colors.red[900],
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
-                  label: Text(
-                    'Leave',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                  color: Colors.transparent,
-                  onPressed: leaveActivity,
-                ),
-              ),
-            )*/
           ],
         ),
       ),
