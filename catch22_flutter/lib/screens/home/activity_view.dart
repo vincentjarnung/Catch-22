@@ -1,13 +1,16 @@
 import 'package:catch22_flutter/services/database.dart';
+import 'package:catch22_flutter/shared/button_widget.dart';
 import 'package:catch22_flutter/shared/constants/color_constants.dart';
+import 'package:catch22_flutter/shared/img_button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class ActivityView extends StatefulWidget {
   final String code;
+  final int daysLeft;
 
-  ActivityView({@required this.code});
+  ActivityView({@required this.code, @required this.daysLeft});
 
   @override
   _ActivityViewState createState() => _ActivityViewState();
@@ -19,7 +22,6 @@ class _ActivityViewState extends State<ActivityView> {
   double totCurSteps;
   double todayStepGoal;
   double todayCurStep;
-  int daysLeft;
   String title = '';
 
   Future _getGroupName() async {
@@ -31,12 +33,6 @@ class _ActivityViewState extends State<ActivityView> {
   void initState() {
     super.initState();
     _getGroupName();
-  }
-
-  int _getDaysLeft(String end) {
-    DateTime endDate = DateTime.parse(end);
-    var diff = endDate.difference(DateTime.now()).inDays;
-    return diff;
   }
 
   String _formatNumber(int numb) {
@@ -51,6 +47,11 @@ class _ActivityViewState extends State<ActivityView> {
     return s;
   }
 
+  void _onSelected() {
+    _db.leaveGroup(widget.code);
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     print(widget.code);
@@ -60,169 +61,286 @@ class _ActivityViewState extends State<ActivityView> {
         stream: _db.viewActivity(widget.code),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return CircularProgressIndicator();
+            return Center(child: CircularProgressIndicator());
           } else {
             totStepGoal = snapshot.data['goal'].toDouble();
             totCurSteps = snapshot.data['currentSteps'].toDouble();
+            bool didWin = false;
+            if (totCurSteps >= totStepGoal) {
+              didWin = true;
+            }
 
-            daysLeft = _getDaysLeft(snapshot.data['endDate']);
-            todayStepGoal = (totStepGoal ~/ daysLeft).toDouble();
-            todayCurStep = (totCurSteps ~/ daysLeft).toDouble();
+            if (widget.daysLeft > 0) {
+              todayStepGoal = (totStepGoal ~/ widget.daysLeft).toDouble();
+              todayCurStep = (totCurSteps ~/ widget.daysLeft).toDouble();
+            }
             return Scaffold(
               appBar: AppBar(
                 title: Text(title),
                 centerTitle: true,
-              ),
-              body: SingleChildScrollView(
-                  child: Column(
-                children: [
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Container(
-                    height: 170,
-                    width: 370,
-                    decoration: BoxDecoration(
-                        color: ColorConstants.kyellow,
-                        borderRadius: BorderRadius.all(
-                          Radius.circular(30),
-                        )),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 10, 10, 0),
-                          child: Row(children: [
-                            Image.asset(
-                              'assets/images/steps.png',
-                              width: 30,
-                              height: 30,
-                              fit: BoxFit.cover,
+                actions: <Widget>[
+                  PopupMenuButton(
+                      onSelected: (item) => _onSelected(),
+                      itemBuilder: (context) => [
+                            PopupMenuItem<int>(
+                              value: 0,
+                              child: Text('Leave Group'),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 20),
-                              child: Text('Steps',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 20)),
-                            )
-                          ]),
-                        ),
+                          ])
+                ],
+              ),
+              body: widget.daysLeft <= 0
+                  ? Column(
+                      children: [
+                        const Spacer(flex: 2),
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-                          child: SfLinearGauge(
-                            axisTrackStyle:
-                                LinearAxisTrackStyle(color: Colors.grey[350]),
-                            maximum: totStepGoal,
-                            barPointers: [
-                              LinearBarPointer(
-                                enableAnimation: false,
-                                value: totCurSteps,
-                                color: ColorConstants.kSecoundaryColor,
-                              )
-                            ],
-                            showAxisTrack: true,
-                            showLabels: false,
-                            showTicks: false,
-                          ),
+                            padding: const EdgeInsets.fromLTRB(30, 0, 30, 0),
+                            child: didWin
+                                ? Image.asset('assets/images/goalCompleted.png')
+                                : Image.asset(
+                                    'assets/images/goalNotCompleted.png')),
+                        SizedBox(
+                          height: 10,
                         ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                children: [
-                                  Text(''),
-                                  Text(
-                                      _formatNumber(totCurSteps.toInt())
-                                          .toString(),
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20))
-                                ],
-                              ),
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text('GOAL'),
-                                  Text(
-                                      _formatNumber(totStepGoal.toInt())
-                                          .toString(),
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 20))
-                                ],
-                              )
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 20, 10, 10),
-                          child: Row(
-                            children: [
-                              Icon(Icons.calendar_today_sharp),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Text(
-                                daysLeft.toString() + ' days left',
+                        didWin
+                            ? Text(
+                                'GOAL COMPLETED',
                                 style: TextStyle(
                                     fontSize: 20, fontWeight: FontWeight.bold),
+                              )
+                            : Text(
+                                'GOAL NOT COMPLETED',
+                                style: TextStyle(
+                                    fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          _formatNumber(totStepGoal.toInt()) + ' steps',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        const Spacer(
+                          flex: 2,
+                        ),
+                        ButtonWidget(
+                          hasBorder: false,
+                          text: 'DONE',
+                          width: 150,
+                          height: 50,
+                          onClick: () {
+                            _db.leaveGroup(widget.code);
+                            Navigator.pop(context);
+                          },
+                        ),
+                        SizedBox(
+                          height: 20,
+                        ),
+
+                        /*Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: ImageButtonWidget(
+                            icon: Icon(Icons.refresh),
+                            text: 'RECREATE GROUP',
+                            height: 50,
+                            width: 220,
+                            onClick: () {},
+                          ),
+                        ),*/
+                      ],
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                      children: [
+                        SizedBox(
+                          height: 20,
+                        ),
+                        Container(
+                          height: 170,
+                          width: 370,
+                          decoration: BoxDecoration(
+                              color: ColorConstants.kyellow,
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(30),
+                              )),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 10, 10, 0),
+                                child: Row(children: [
+                                  Image.asset(
+                                    'assets/images/steps.png',
+                                    width: 30,
+                                    height: 30,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 20),
+                                    child: Text('Steps',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 20)),
+                                  )
+                                ]),
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                                child: SfLinearGauge(
+                                  axisTrackStyle: LinearAxisTrackStyle(
+                                      color: Colors.grey[350]),
+                                  maximum: totStepGoal,
+                                  barPointers: [
+                                    LinearBarPointer(
+                                      enableAnimation: false,
+                                      value: totCurSteps,
+                                      color: ColorConstants.kSecoundaryColor,
+                                    )
+                                  ],
+                                  showAxisTrack: true,
+                                  showLabels: false,
+                                  showTicks: false,
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 10, 20, 0),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      children: [
+                                        Text(''),
+                                        Text(
+                                            _formatNumber(totCurSteps.toInt())
+                                                .toString(),
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 20))
+                                      ],
+                                    ),
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text('GOAL'),
+                                        Text(
+                                            _formatNumber(totStepGoal.toInt())
+                                                .toString(),
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 20))
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 20, 10, 10),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.calendar_today_sharp),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    Text(
+                                      widget.daysLeft.toString() + ' days left',
+                                      style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: heightOfScreen * 0.09,
+                          width: widthOfScreen,
+                        ),
+                        Container(
+                          height: heightOfScreen * 0.35,
+                          width: widthOfScreen * 0.8,
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: ColorConstants.kyellow, width: 5.0)),
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: heightOfScreen * 0.03,
+                              ),
+                              Text(
+                                'Goal of the day',
+                                style: TextStyle(fontSize: 20),
+                              ),
+                              SizedBox(
+                                height: heightOfScreen * 0.02,
+                              ),
+                              Text(
+                                  _formatNumber(todayStepGoal.toInt()) +
+                                      ' steps',
+                                  style: TextStyle(
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.bold)),
+                              SizedBox(
+                                height: heightOfScreen * 0.03,
+                              ),
+                              Text(
+                                'Steps Taken',
+                                style: TextStyle(fontSize: 20),
+                              ),
+                              SizedBox(
+                                height: heightOfScreen * 0.02,
+                              ),
+                              Text(
+                                  _formatNumber(todayCurStep.toInt()) +
+                                      ' steps',
+                                  style: TextStyle(
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.bold)),
+                              SizedBox(
+                                height: heightOfScreen * 0.02,
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                                child: SfLinearGauge(
+                                  axisTrackStyle: LinearAxisTrackStyle(
+                                      color: Colors.white,
+                                      thickness: heightOfScreen * 0.05,
+                                      edgeStyle: LinearEdgeStyle.bothCurve,
+                                      borderColor: ColorConstants.kyellow,
+                                      borderWidth: 5),
+                                  maximum: todayStepGoal,
+                                  barPointers: [
+                                    LinearBarPointer(
+                                      enableAnimation: false,
+                                      value: todayCurStep,
+                                      color: ColorConstants.kyellow,
+                                      thickness: heightOfScreen * 0.050,
+                                      edgeStyle: LinearEdgeStyle.bothCurve,
+                                      child: Center(
+                                          child: Text(
+                                              (todayStepGoal ~/ todayCurStep)
+                                                      .toString() +
+                                                  '%')),
+                                    )
+                                  ],
+                                  showAxisTrack: true,
+                                  showLabels: false,
+                                  showTicks: false,
+                                ),
                               ),
                             ],
                           ),
                         )
                       ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: heightOfScreen * 0.09,
-                    width: widthOfScreen,
-                  ),
-                  Container(
-                    height: heightOfScreen * 0.3,
-                    width: widthOfScreen * 0.8,
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                            color: ColorConstants.kyellow, width: 5.0)),
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          height: heightOfScreen * 0.03,
-                        ),
-                        Text(
-                          'Goal of the day',
-                          style: TextStyle(fontSize: 20),
-                        ),
-                        SizedBox(
-                          height: heightOfScreen * 0.02,
-                        ),
-                        Text(_formatNumber(todayStepGoal.toInt()) + ' steps',
-                            style: TextStyle(
-                                fontSize: 25, fontWeight: FontWeight.bold)),
-                        SizedBox(
-                          height: heightOfScreen * 0.03,
-                        ),
-                        Text(
-                          'Steps Taken',
-                          style: TextStyle(fontSize: 20),
-                        ),
-                        SizedBox(
-                          height: heightOfScreen * 0.02,
-                        ),
-                        Text(_formatNumber(todayCurStep.toInt()) + ' steps',
-                            style: TextStyle(
-                                fontSize: 25, fontWeight: FontWeight.bold)),
-                        SizedBox(
-                          height: heightOfScreen * 0.02,
-                        ),
-                      ],
-                    ),
-                  )
-                ],
-              )),
+                    )),
             );
           }
         });

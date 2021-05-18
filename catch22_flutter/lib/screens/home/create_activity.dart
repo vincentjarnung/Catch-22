@@ -176,12 +176,12 @@ class _GoalActivityState extends State<GoalActivity> {
                   txt: stepGoal.toString(),
                   minus: () {
                     setState(() {
-                      stepGoal -= 1000;
+                      stepGoal -= 5000;
                     });
                   },
                   add: () {
                     setState(() {
-                      stepGoal += 1000;
+                      stepGoal += 5000;
                     });
                   }),
               Padding(

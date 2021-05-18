@@ -19,17 +19,26 @@ class _JoinGroupState extends State<JoinGroup> {
 
   String aName;
   bool exists;
+  bool isComp;
 
   Future codeExist(String code) async {
-    return await FirebaseFirestore.instance
+    await FirebaseFirestore.instance
         .collection('activities')
         .where('code', isEqualTo: code)
         .get()
         .then((snapshot) {
       snapshot.docs.forEach((value) {
         aName = value.id;
+        isComp = false;
       });
-    });
+    }).whenComplete(() => FirebaseFirestore.instance
+            .collection('activitiesComp')
+            .where('code', isEqualTo: code)
+            .get()
+            .then((snap) => snap.docs.forEach((val) {
+                  aName = val.id;
+                  isComp = true;
+                })));
   }
 
   @override
@@ -94,10 +103,16 @@ class _JoinGroupState extends State<JoinGroup> {
                       codeExist(code).whenComplete(() {
                         if (aName != null) {
                           print(code);
-
-                          _db.setMemStep(aName).whenComplete(() => _db
-                              .joinActivity(code)
-                              .whenComplete(() => _showAlertDialog(context)));
+                          if (isComp) {
+                            _db
+                                .setCompMem(code)
+                                .whenComplete(() => _db.joinActivity(code))
+                                .whenComplete(() => _showAlertDialog(context));
+                          } else {
+                            _db.setMemStep(aName).whenComplete(() => _db
+                                .joinActivity(code)
+                                .whenComplete(() => _showAlertDialog(context)));
+                          }
                         } else {
                           setState(() {
                             error = 'No group found';

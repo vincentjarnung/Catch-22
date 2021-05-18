@@ -15,12 +15,76 @@ class DatabaseService {
   var activitiesCompInstance =
       FirebaseFirestore.instance.collection('activitiesComp');
 
-  Future newUserData(
-      String userName, String email, String uid, int stepGoal) async {
+  Future leaveCompGroup(String code) async {
+    String userName = await getUserName();
+    var val = [code];
+    await activitiesCompInstance
+        .doc(code)
+        .collection('members')
+        .doc(userName)
+        .collection('steps')
+        .get()
+        .then((value) {
+          for (DocumentSnapshot ds in value.docs) {
+            ds.reference.delete();
+          }
+        })
+        .whenComplete(() => activitiesCompInstance
+            .doc(code)
+            .collection('members')
+            .doc(userName)
+            .delete()
+            .whenComplete(() => usersInstance
+                .doc(_auth.getCurrentUser())
+                .update({'activities': FieldValue.arrayRemove(val)})))
+        .whenComplete(() {
+          try {
+            var result =
+                activitiesCompInstance.doc(code).collection('members').get();
+            result.then((value) {
+              if (value.docs.length == 0) {
+                activitiesCompInstance.doc(code).delete();
+              }
+            });
+          } catch (e) {
+            print(e);
+            activitiesCompInstance.doc(code).delete();
+          }
+        });
+  }
+
+  Future leaveGroup(String code) async {
+    String userName = await getUserName();
+    var val = [code];
+    await activitiesInstance
+        .doc(code)
+        .collection('members')
+        .doc(userName)
+        .delete()
+        .whenComplete(() => usersInstance
+            .doc(_auth.getCurrentUser())
+            .update({'activities': FieldValue.arrayRemove(val)}))
+        .whenComplete(() {
+      try {
+        var result = activitiesInstance.doc(code).collection('members').get();
+        result.then((value) {
+          print(value.docs.length);
+          if (value.docs.length == 0) {
+            activitiesInstance.doc(code).delete();
+          }
+        });
+      } catch (e) {
+        print(e);
+        activitiesInstance.doc(code).delete();
+      }
+    });
+  }
+
+  Future newUserData(String userName, String email, String uid) async {
     return await usersInstance.doc(uid).set({
       'userName': userName,
       'email': email,
-      'stepGoal': stepGoal,
+      'stepGoal': 5000,
       'activities': []
     });
   }
@@ -101,6 +165,31 @@ class DatabaseService {
     }
   }
 
+  Future<String> getGroupType(code) async {
+    String test;
+    var group = await activitiesInstance.doc(code).get();
+    var groupComp = await activitiesCompInstance.doc(code).get();
+    try {
+      test = group.data()['groupName'];
+      return 'Goal';
+    } catch (e) {
+      test = groupComp.data()['groupName'];
+      return 'Competition';
+    }
+  }
+
+  Future<String> getGropEndDate(code) async {
+    String test;
+    var group = await activitiesInstance.doc(code).get();
+    var groupComp = await activitiesCompInstance.doc(code).get();
+    try {
+      test = group.data()['endDate'];
+    } catch (e) {
+      test = groupComp.data()['endDate'];
+    }
+    return test;
+  }
+
   Future setMemStep(String code) async {
     String userName = await getUserName();
     var group = await activitiesInstance.doc(code).get();
@@ -176,10 +265,18 @@ class DatabaseService {
       'isStep': isStep,
       'startDate': DateFormat('yyyy-MM-dd').format(DateTime.now()),
       'code': code,
-    }).whenComplete(() {
-      print('done');
-      setCompMemStep(code);
+    }).whenComplete(() async {
+      setCompMem(code);
     });
+  }
+
+  Future setCompMem(String code) async {
+    String userName = await getUserName();
+    return await activitiesCompInstance
+        .doc(code)
+        .collection('members')
+        .doc(userName)
+        .set({'userName': userName}).whenComplete(() => setCompMemStep(code));
   }
 
   Future setCompMemStep(String code) async {
@@ -216,13 +313,17 @@ class DatabaseService {
                 .doc(code)
                 .collection('members')
                 .doc(userName)
-                .set({doc.id: doc.data()['steps'] + doc.data()['addedSteps']});
+                .collection('steps')
+                .doc(doc.id)
+                .set({'steps': uSteps});
           } else if (alredyData < uSteps) {
             await activitiesCompInstance
                 .doc(code)
                 .collection('members')
                 .doc(userName)
-                .update({doc.id: FieldValue.increment(uSteps - alredyData)});
+                .collection('steps')
+                .doc(doc.id)
+                .update({'steps': FieldValue.increment(uSteps - alredyData)});
           }
         }
       });
@@ -335,8 +436,32 @@ class DatabaseService {
     yield* usersInstance.doc(_auth.getCurrentUser()).snapshots();
   }
 
-  Stream<DocumentSnapshot> viewActivity(String name) async* {
-    yield* activitiesInstance.doc(name).snapshots();
+  Stream<DocumentSnapshot> viewActivity(String code) async* {
+    yield* activitiesInstance.doc(code).snapshots();
+  }
+
+  Future<QuerySnapshot> viewCompActivity(String code) async {
+    return activitiesCompInstance.doc(code).collection('members').get();
+  }
+
+  Future<QuerySnapshot> viewCompMemActivity(String code, String userName) {
+    return activitiesCompInstance
+        .doc(code)
+        .collection('members')
+        .doc(userName)
+        .collection('steps')
+        .get();
+  }
+
+  Future<DocumentSnapshot> viewtodayCompMemActivity(
+      String code, String userName) {
+    return activitiesCompInstance
+        .doc(code)
+        .collection('members')
+        .doc(userName)
+        .collection('steps')
+        .doc(DateFormat('yyyy-MM-dd').format(DateTime.now()))
+        .get();
   }
 
   Future<QuerySnapshot> get achievements {

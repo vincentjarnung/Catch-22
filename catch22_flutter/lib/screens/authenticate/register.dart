@@ -1,4 +1,5 @@
 import 'package:catch22_flutter/models/steps_day.dart';
+import 'package:catch22_flutter/screens/authenticate/set_step_goal.dart';
 import 'package:catch22_flutter/screens/wrapper.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/button_widget.dart';
@@ -23,22 +24,9 @@ class _RegisterState extends State<Register> {
   String password = '';
   String userName = '';
   String error = '';
-  int stepGoal = 7500;
 
   void initState() {
     super.initState();
-  }
-
-  void _addSteps() {
-    setState(() {
-      stepGoal += 500;
-    });
-  }
-
-  void _minusSteps() {
-    setState(() {
-      stepGoal -= 500;
-    });
   }
 
   @override
@@ -109,25 +97,6 @@ class _RegisterState extends State<Register> {
                       style: TextStyle(color: Colors.red, fontSize: 14.0),
                     ),
                   ),
-                  Text('Set Step Goal (This can be changed later)'),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                          icon: Icon(Icons.remove),
-                          onPressed: () {
-                            _minusSteps();
-                          }),
-                      Text(stepGoal.toString(),
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 20)),
-                      IconButton(
-                          icon: Icon(Icons.add),
-                          onPressed: () {
-                            _addSteps();
-                          }),
-                    ],
-                  ),
                   SizedBox(
                     height: 20,
                   ),
@@ -147,7 +116,6 @@ class _RegisterState extends State<Register> {
                           userName.trimRight().toLowerCase(),
                           email.trimRight(),
                           password.trimRight(),
-                          stepGoal,
                         );
 
                         if (result == null) {
@@ -161,7 +129,9 @@ class _RegisterState extends State<Register> {
                               .whenComplete(() => Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => Wrapper()))));
+                                      builder: (context) => SetStepGoal(
+                                            userName: userName,
+                                          )))));
                         }
                       }
                     },

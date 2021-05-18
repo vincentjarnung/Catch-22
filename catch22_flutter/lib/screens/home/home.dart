@@ -43,10 +43,11 @@ class _HomeState extends State<Home> {
   int _week = 0;
   StateSetter _setter;
   int _pSteps = 0;
+  int _diff;
 
   var formatter = new DateFormat('yyyy-MM-dd');
 
-  Future _getPermission() async {
+  /*Future _getPermission() async {
     if (Platform.isIOS) {
       var status = await Permission.sensors.status;
       print('IOS!!!');
@@ -72,11 +73,22 @@ class _HomeState extends State<Home> {
         _stepCountStream = Pedometer.stepCountStream;
         _subscription =
             _stepCountStream.listen(onStepCount, onError: onStepCountError);
-        _getStepsD().whenComplete(() {
-          _getSteps(DateTime.now());
-          _lastWeekData(tester, DateTime.now());
-          _getWeekDates();
-        });
+      }
+    }
+  }
+
+  Future _updateMissingDateSteps() async {
+    DateTime now = DateTime.now();
+    print(_diff.toString() + ' asdas');
+    if (_diff > 0) {
+      int loc = _diff;
+      for (; _diff > 0; _diff--) {
+        String yesterday = DateFormat('yyyy-MM-dd')
+            .format(DateTime(now.year, now.month, now.day - (_diff)));
+        print(_steps);
+        await _db
+            .updateSteps((_steps) ~/ (loc), yesterday, true)
+            .whenComplete(() => setState(() {}));
       }
     }
   }
@@ -94,34 +106,28 @@ class _HomeState extends State<Home> {
 
     savedData.docs.forEach((element) {
       walkedSteps += element.data()['steps'];
+      print(walkedSteps);
+      print(element.id);
       lastDate = element.id;
     });
 
     String todayDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    DateTime now = DateTime.now();
-    int diff =
+
+    _diff =
         DateTime.parse(todayDate).difference(DateTime.parse(lastDate)).inDays -
             1;
 
-    if (diff > 0) {
-      int loc = diff;
-      for (; diff > 0; diff--) {
-        String yesterday = DateFormat('yyyy-MM-dd')
-            .format(DateTime(now.year, now.month, now.day - (diff)));
-
-        await _db.updateSteps(
-            (event.steps - walkedSteps) ~/ (loc), yesterday, true);
-      }
-    }
+    print(walkedSteps.toString() + 'asdasd');
 
     todaySteps = event.steps - walkedSteps;
     _pSteps = todaySteps;
+    print(todaySteps.toString() + 'asdasd');
     setState(() {
       _steps = todaySteps.toDouble() + _cSteps;
     });
     print('first ' + todaySteps.toString());
     return todaySteps;
-  }
+  }*/
 
   Future _getStepsD() async {
     return await _db.getDateAndSteps().then((snapshot) => setState(() {
@@ -132,19 +138,14 @@ class _HomeState extends State<Home> {
 
   void initState() {
     super.initState();
-    _getPermission();
-    _getStepGoal();
     if (!mounted) return;
-  }
-
-  @override
-  void dispose() {
-    stopListening();
-    super.dispose();
-  }
-
-  void stopListening() {
-    _subscription.cancel();
+    _getStepsD().whenComplete(() {
+      _getSteps(DateTime.now());
+      _db.updateSteps(_steps.toInt(), formatter.format(DateTime.now()), true);
+      _lastWeekData(tester, DateTime.now());
+      _getWeekDates();
+    });
+    _getStepGoal();
   }
 
   void _getSteps(DateTime date) {

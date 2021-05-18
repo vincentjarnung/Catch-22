@@ -61,7 +61,7 @@ class _CompetitionState extends State<Competition> {
                     ),
                     Text('Your active groups'),
                     Container(
-                        height: 310,
+                        height: 280,
                         width: 350,
                         child: ListView.builder(
                           itemCount: list.length,
@@ -76,14 +76,6 @@ class _CompetitionState extends State<Competition> {
                                     width: 70,
                                   ),
                                   code: list[index],
-                                  groupType: 'Goal',
-                                  onClick: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (builder) => ActivityView(
-                                                code: list[index])));
-                                  },
                                 ),
                               ),
                             );

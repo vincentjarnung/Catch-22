@@ -1,5 +1,6 @@
 import 'package:catch22_flutter/models/simple_user.dart';
 import 'package:catch22_flutter/models/steps_day.dart';
+import 'package:catch22_flutter/screens/authenticate/set_step_goal.dart';
 import 'package:catch22_flutter/screens/home/bottom_navigation_bar.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

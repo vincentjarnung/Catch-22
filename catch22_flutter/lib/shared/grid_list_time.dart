@@ -25,7 +25,7 @@ class _GridListItemState extends State<GridListItem> {
           return GestureDetector(
             onTap: widget.onClick,
             child: Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.all(20.0),
               child: !widget.owned
                   ? ColorFiltered(
                       colorFilter:
