@@ -47,14 +47,15 @@ class _ActivityCompViewState extends State<ActivityCompView> {
           _todayList
               .add(await _getTodayScore(doc.id).whenComplete(() => setState(() {
                     _todayList.sort((a, b) {
-                      return a.steps.compareTo(b.steps);
+                      return b.steps.compareTo(a.steps);
                     });
                   })));
           _allTimeList.add(
               await _getAllTimeScore(doc.id).whenComplete(() => setState(() {
                     _allTimeList.sort((a, b) {
-                      return a.steps.compareTo(b.steps);
+                      return b.steps.compareTo(a.steps);
                     });
+                    print(_allTimeList);
 
                     if (widget.daysLeft <= 0) {
                       _ended = true;
@@ -262,6 +263,7 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                   )
                 ])
               : Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
                       height: 20,
@@ -274,6 +276,7 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                           borderRadius: BorderRadius.circular(20),
                           color: ColorConstants.kyellow),
                       child: ListView.builder(
+                        shrinkWrap: true,
                         itemCount: _todayList.length,
                         itemBuilder: (context, index) {
                           return Center(

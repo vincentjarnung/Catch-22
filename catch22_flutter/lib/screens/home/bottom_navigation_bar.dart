@@ -1,7 +1,9 @@
 import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:catch22_flutter/screens/home/competition.dart';
 import 'package:catch22_flutter/screens/home/home.dart';
+import 'package:catch22_flutter/screens/home/sfh_movment.dart';
 import 'package:catch22_flutter/screens/home/trophies.dart';
+import 'package:catch22_flutter/shared/constants/color_constants.dart';
 
 import 'package:flutter/material.dart';
 
@@ -30,12 +32,15 @@ class _BottomNavBarState extends State<BottomNavBar> {
 
   @override
   Widget build(BuildContext context) {
-    final widgetOptions = [Home(), Trophies(), Competition()];
+    final widgetOptions = [Home(), Trophies(), Competition(), SFHMovment()];
     return Scaffold(
       body: Center(
         child: widgetOptions.elementAt(selIndex),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        fixedColor: ColorConstants.kPrimaryColor,
+        backgroundColor: ColorConstants.kSecoundaryColor,
+        unselectedItemColor: ColorConstants.kSecoundaryColor,
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined), label: 'Home'),
@@ -43,6 +48,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
               icon: Icon(Icons.military_tech_outlined), label: 'Trophies'),
           BottomNavigationBarItem(
               icon: Icon(Icons.people_outline), label: 'Competitions'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.graphic_eq), label: 'SFH Movment'),
         ],
         currentIndex: selIndex,
         onTap: onItemTapped,
