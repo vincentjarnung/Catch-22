@@ -30,7 +30,7 @@ class _ActivityCompViewState extends State<ActivityCompView> {
   void initState() {
     super.initState();
     _getGroupName();
-    _members();
+    _members().whenComplete(() => print(_allTimeList.toString() + ' testing'));
   }
 
   String title = '';
@@ -42,65 +42,69 @@ class _ActivityCompViewState extends State<ActivityCompView> {
 
   Future _members() async {
     var data = _db.viewCompActivity(widget.code);
-    return await data.then((value) => value.docs.forEach((doc) async {
+    await data.then((value) => value.docs.forEach((doc) async {
           print(doc.id);
-          _todayList
-              .add(await _getTodayScore(doc.id).whenComplete(() => setState(() {
-                    _todayList.sort((a, b) {
-                      return b.steps.compareTo(a.steps);
-                    });
-                  })));
-          _allTimeList.add(
-              await _getAllTimeScore(doc.id).whenComplete(() => setState(() {
-                    _allTimeList.sort((a, b) {
-                      return b.steps.compareTo(a.steps);
-                    });
-                    print(_allTimeList);
+          await _getTodayScore(doc.id).whenComplete(() => setState(() {
+                _todayList.sort((a, b) {
+                  return b.steps.compareTo(a.steps);
+                });
+              }));
 
-                    if (widget.daysLeft <= 0) {
-                      _ended = true;
+          await _getAllTimeScore(doc.id).whenComplete(() => setState(() {
+                _allTimeList.sort((a, b) {
+                  return b.steps.compareTo(a.steps);
+                });
 
-                      for (int i = 0; i < _todayList.length; i++) {
-                        _users.add(_todayList[i].date);
-                      }
-                      try {
-                        _firstPlace = _users[0];
-                      } catch (e) {}
-                      try {
-                        _secoundPlace = _users[1];
-                      } catch (e) {}
-                      try {
-                        _thirdPlace = _users[2];
-                      } catch (e) {}
-                    }
-                  })));
+                for (int i = 0; i < _allTimeList.length; i++) {
+                  print(_allTimeList[i].steps);
+                }
+
+                if (widget.daysLeft <= 0) {
+                  _ended = true;
+
+                  for (int i = 0; i < _todayList.length; i++) {
+                    _users.add(_todayList[i].date);
+                  }
+                  try {
+                    _firstPlace = _users[0];
+                  } catch (e) {}
+                  try {
+                    _secoundPlace = _users[1];
+                  } catch (e) {}
+                  try {
+                    _thirdPlace = _users[2];
+                  } catch (e) {}
+                }
+              }));
         }));
   }
 
   Future _getAllTimeScore(String userName) async {
-    StepsDayModel item;
     int totSteps = 0;
     var result = _db.viewCompMemActivity(widget.code, userName);
     await result
         .then((data) => data.docs.forEach((doc) {
               totSteps += doc['steps'];
             }))
-        .whenComplete(() =>
-            item = StepsDayModel(date: userName, steps: totSteps.toDouble()));
-    return item;
+        .whenComplete(() => _allTimeList
+            .add(StepsDayModel(date: userName, steps: totSteps.toDouble())));
   }
 
   Future _getTodayScore(String userName) async {
-    StepsDayModel item;
     var result = _db.viewtodayCompMemActivity(widget.code, userName);
-    await result.then((doc) => item =
-        StepsDayModel(date: userName, steps: doc.data()['steps'].toDouble()));
-    return item;
+    await result.then((doc) => _todayList.add(
+        StepsDayModel(date: userName, steps: doc.data()['steps'].toDouble())));
   }
 
-  void _onSelected() {
-    _db.leaveCompGroup(widget.code);
-    Navigator.pop(context);
+  void _onSelected(BuildContext context, int item) {
+    switch (item) {
+      case 0:
+        _db.leaveCompGroup(widget.code);
+        Navigator.pop(context);
+        break;
+      case 1:
+        break;
+    }
   }
 
   @override
@@ -116,7 +120,7 @@ class _ActivityCompViewState extends State<ActivityCompView> {
         centerTitle: true,
         actions: <Widget>[
           PopupMenuButton(
-              onSelected: (item) => _onSelected(),
+              onSelected: (item) => _onSelected(context, item),
               itemBuilder: (context) => [
                     PopupMenuItem<int>(
                       value: 0,
@@ -263,14 +267,12 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                   )
                 ])
               : Column(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
                       height: 20,
                     ),
                     Text('Today', style: header),
                     Container(
-                      height: heightOfScreen * 0.35,
                       width: widthOfScreen * 0.9,
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
@@ -280,63 +282,62 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                         itemCount: _todayList.length,
                         itemBuilder: (context, index) {
                           return Center(
-                              child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(_todayList[index].date, style: item),
-                                Text(_todayList[index].steps.toInt().toString(),
-                                    style: itemVal)
-                              ],
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(_todayList[index].date, style: item),
+                                  Text(
+                                      _todayList[index]
+                                          .steps
+                                          .toInt()
+                                          .toString(),
+                                      style: itemVal)
+                                ],
+                              ),
                             ),
-                          ));
+                          );
                         },
                       ),
                     ),
                     SizedBox(
                       height: 20,
                     ),
-                    Text(
-                      'Leaderbord',
-                      style: header,
-                    ),
+                    Text('Leaderboard', style: header),
                     Container(
-                      height: heightOfScreen * 0.35,
                       width: widthOfScreen * 0.9,
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           color: ColorConstants.kyellow),
                       child: ListView.builder(
-                        itemCount: _allTimeList.length,
+                        shrinkWrap: true,
+                        itemCount: _todayList.length,
                         itemBuilder: (context, index) {
                           return Center(
-                              child: Padding(
-                            padding: const EdgeInsets.all(20.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  (index + 1).toString(),
-                                  style: itemVal,
-                                ),
-                                SizedBox(
-                                  width: 15,
-                                ),
-                                Text(
-                                  _allTimeList[index].date,
-                                  style: item,
-                                ),
-                                const Spacer(),
-                                Text(
-                                    _allTimeList[index]
-                                        .steps
-                                        .toInt()
-                                        .toString(),
-                                    style: itemVal)
-                              ],
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  _allTimeList.length == 0
+                                      ? Text('-')
+                                      : Text(_allTimeList[index].date,
+                                          style: item),
+                                  _allTimeList.length == 0
+                                      ? Text('-')
+                                      : Text(
+                                          _allTimeList[index]
+                                              .steps
+                                              .toInt()
+                                              .toString(),
+                                          style: itemVal)
+                                ],
+                              ),
                             ),
-                          ));
+                          );
                         },
                       ),
                     ),
