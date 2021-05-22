@@ -120,6 +120,10 @@ class DatabaseService {
   }
 
   Future<List<StepsDayModel>> getDateAndSteps() async {
+    int diff;
+    DateTime now = DateTime.now();
+    String date;
+
     List<StepsDayModel> allData = [];
     await steps.then((snapshot) {
       snapshot.docs.forEach((doc) {
@@ -128,7 +132,23 @@ class DatabaseService {
             steps:
                 (doc.data()['steps'] + doc.data()['addedSteps']).toDouble()));
       });
+    }).whenComplete(() {
+      diff = now
+          .difference(DateTime.parse(allData[allData.length - 1].date))
+          .inDays;
+      print(diff.toString() + '  test');
+      int i = diff;
+      if (diff > 0) {
+        while (i >= 0) {
+          date = DateFormat('yyyy-MM-dd')
+              .format(DateTime(now.year, now.month, now.day - i));
+          updateSteps(0, date, true);
+          allData.add(StepsDayModel(date: date, steps: 0));
+          i--;
+        }
+      }
     });
+
     return allData;
   }
 
@@ -257,12 +277,10 @@ class DatabaseService {
         .update({'currentSteps': FieldValue.increment(val)});
   }
 
-  Future newCompActivity(
-      String name, bool isStep, String endDate, String code) async {
+  Future newCompActivity(String name, String endDate, String code) async {
     await activitiesCompInstance.doc(code).set({
       'groupName': name,
       'endDate': endDate,
-      'isStep': isStep,
       'startDate': DateFormat('yyyy-MM-dd').format(DateTime.now()),
       'code': code,
     }).whenComplete(() async {

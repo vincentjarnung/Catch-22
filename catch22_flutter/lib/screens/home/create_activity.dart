@@ -320,8 +320,7 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
   int stepGoal = 100000;
   int improvmentGoal = 25;
   bool hasSel = true;
-  bool isStep = true;
-  int _value = 1;
+
   String actName = '';
   String error = '';
   String code;
@@ -369,7 +368,18 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20.0, 20, 20, 5),
+                padding: const EdgeInsets.all(30.0),
+                child: Text(
+                  'Name Your activity',
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                      color: hasSel ? Colors.black : Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20.0, 10, 20, 0),
                 child: TextFieldWidget(
                   isEmail: false,
                   isLast: true,
@@ -385,45 +395,6 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
                 style: TextStyle(color: Colors.red),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(30, 5, 30, 15),
-                child: Text(
-                  'Chose between Step or Improvment Competition',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  ButtonWidget(
-                      hasBorder: !isStep,
-                      width: 150,
-                      text: 'Step',
-                      onClick: () {
-                        setState(
-                          () {
-                            isStep = true;
-                          },
-                        );
-                      }),
-                  ButtonWidget(
-                      hasBorder: isStep,
-                      width: 150,
-                      text: 'Improvment',
-                      onClick: () {
-                        setState(
-                          () {
-                            isStep = false;
-                          },
-                        );
-                      })
-                ],
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              Padding(
                 padding: const EdgeInsets.all(30.0),
                 child: Text(
                   'Select an end date for the Activity',
@@ -435,7 +406,7 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
                 ),
               ),
               Container(
-                height: 300,
+                height: 320,
                 width: 300,
                 child: dp.DayPicker.single(
                   selectedDate: _selectedDate,
@@ -516,8 +487,6 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
                     height: 30,
                     width: 120,
                     onClick: () async {
-                      print(isStep);
-
                       print(DateFormat('yyyy-MM-dd').format(_selectedDate));
                       print(stepGoal);
                       print(actName);
@@ -525,7 +494,6 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
                       _db
                           .newCompActivity(
                               actName,
-                              isStep,
                               DateFormat('yyyy-MM-dd').format(_selectedDate),
                               code)
                           .whenComplete(() => _db.joinActivity(code));

@@ -133,15 +133,21 @@ class _HomeState extends State<Home> {
     return await _db.getDateAndSteps().then((snapshot) => setState(() {
           print('first');
           tester = snapshot;
+
+          for (int i = 0; i < tester.length; i++) {
+            print(tester[i].steps);
+            print(tester[i].date);
+          }
         }));
   }
 
   void initState() {
     super.initState();
     if (!mounted) return;
+
     _getStepsD().whenComplete(() {
       _getSteps(DateTime.now());
-      _db.updateSteps(_steps.toInt(), formatter.format(DateTime.now()), true);
+      //_db.updateSteps(_steps.toInt(), formatter.format(DateTime.now()), true);
       _lastWeekData(tester, DateTime.now());
       _getWeekDates();
     });
@@ -279,30 +285,18 @@ class _HomeState extends State<Home> {
 
     displaySteps = [];
     int i = data.length - 1 - change;
-    if (formatter.format(date) == formatter.format(DateTime.now())) {
-      for (int n = 6; n >= 0; n--) {
-        if (i - n > 0) {
-          DateTime days = DateTime(date.year, date.month, date.day - n);
-          String dayOfWeek = DateFormat('EEEE').format(days);
-          String dayShort = dayOfWeek.substring(0, 3);
-          displaySteps
-              .add(StepsDayModel(date: dayShort, steps: data[i - n].steps));
-        }
-      }
-      print(_cSteps);
-      displaySteps.add(StepsDayModel(
-          date: DateFormat('EEEE').format(DateTime.now()).substring(0, 3),
-          steps: _pSteps.toDouble() + _cSteps));
-    } else {
-      for (int n = 6; n >= 0; n--) {
-        if (i - n > 0) {
-          DateTime days = DateTime(date.year, date.month, date.day - n);
-          String dayOfWeek = DateFormat('EEEE').format(days);
-          String dayShort = dayOfWeek.substring(0, 3);
 
-          displaySteps
-              .add(StepsDayModel(date: dayShort, steps: data[i - n].steps));
-        }
+    for (int n = 6; n >= 0; n--) {
+      if (i - n > 0) {
+        DateTime days = DateTime(date.year, date.month, date.day - n);
+        String dayOfWeek = DateFormat('EEEE').format(days);
+        String dayShort = dayOfWeek.substring(0, 3);
+
+        print(days);
+        print(data[i - n].steps);
+
+        displaySteps
+            .add(StepsDayModel(date: dayShort, steps: data[i - n].steps));
       }
     }
   }
