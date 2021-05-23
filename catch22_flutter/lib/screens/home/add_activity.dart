@@ -33,6 +33,7 @@ class _AddActivityState extends State<AddActivity> {
   Color selectedDateStyleColor = Colors.blue;
   Color selectedSingleDateDecorationColor = Colors.red;
   bool _sel = false;
+  double _time = 1;
   int _selSportValue = 0;
   List<DropdownMenuItem<SportsModel>> _dropdownMenuItems;
   SportsModel _selectedItem;
@@ -147,7 +148,7 @@ class _AddActivityState extends State<AddActivity> {
               DropdownButton(
                 hint: Text('Select an Activity',
                     style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                 value: _selectedItem,
                 items: _dropdownMenuItems,
                 onChanged: (value) {
@@ -160,22 +161,32 @@ class _AddActivityState extends State<AddActivity> {
                 },
               ),
               SizedBox(
-                height: 30,
+                height: 20,
               ),
-              Text('Estimated Steps'),
               ChangeDateWidget(
-                txt: _selSportValue.toString(),
-                add: () {
-                  setState(() {
-                    _selSportValue += 500;
-                  });
-                },
-                minus: () {
-                  setState(() {
-                    _selSportValue -= 500;
-                  });
-                },
+                  txt: _time.toString() + ' h',
+                  minus: () {
+                    setState(() {
+                      _time -= 0.5;
+                    });
+                  },
+                  add: () {
+                    setState(() {
+                      _time += 0.5;
+                    });
+                  }),
+              SizedBox(
+                height: 20,
               ),
+              Text(
+                'Estimated Steps',
+                style: TextStyle(fontSize: 16),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              Text((_selSportValue * _time).toInt().toString(),
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
               SizedBox(
                 height: 30,
               ),

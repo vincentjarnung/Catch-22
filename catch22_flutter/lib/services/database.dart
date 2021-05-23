@@ -125,29 +125,33 @@ class DatabaseService {
     String date;
 
     List<StepsDayModel> allData = [];
-    await steps.then((snapshot) {
-      snapshot.docs.forEach((doc) {
-        allData.add(StepsDayModel(
-            date: doc.id,
-            steps:
-                (doc.data()['steps'] + doc.data()['addedSteps']).toDouble()));
-      });
-    }).whenComplete(() {
-      diff = now
-          .difference(DateTime.parse(allData[allData.length - 1].date))
-          .inDays;
-      print(diff.toString() + '  test');
-      int i = diff;
-      if (diff > 0) {
-        while (i >= 0) {
-          date = DateFormat('yyyy-MM-dd')
-              .format(DateTime(now.year, now.month, now.day - i));
-          updateSteps(0, date, true);
-          allData.add(StepsDayModel(date: date, steps: 0));
-          i--;
+    try {
+      await steps.then((snapshot) {
+        snapshot.docs.forEach((doc) {
+          allData.add(StepsDayModel(
+              date: doc.id,
+              steps:
+                  (doc.data()['steps'] + doc.data()['addedSteps']).toDouble()));
+        });
+      }).whenComplete(() {
+        diff = now
+            .difference(DateTime.parse(allData[allData.length - 1].date))
+            .inDays;
+        print(diff.toString() + '  test');
+        int i = diff;
+        if (diff > 0) {
+          while (i >= 0) {
+            date = DateFormat('yyyy-MM-dd')
+                .format(DateTime(now.year, now.month, now.day - i));
+            updateSteps(0, date, true);
+            allData.add(StepsDayModel(date: date, steps: 0));
+            i--;
+          }
         }
-      }
-    });
+      });
+    } catch (e) {
+      allData = [];
+    }
 
     return allData;
   }
@@ -163,7 +167,7 @@ class DatabaseService {
       'todaysSteps': 0
     }).whenComplete(() {
       print('done');
-      setMemStep(code);
+      setMem(code);
     });
   }
 
@@ -210,9 +214,24 @@ class DatabaseService {
     return test;
   }
 
+  Future setMem(String code) async {
+    String userName = await getUserName();
+    return await activitiesInstance
+        .doc(code)
+        .collection('members')
+        .doc(userName)
+        .set({'userName': userName}).whenComplete(() => setMemStep(code));
+  }
+
   Future setMemStep(String code) async {
     String userName = await getUserName();
     var group = await activitiesInstance.doc(code).get();
+    var groupMem = await activitiesInstance
+        .doc(code)
+        .collection('members')
+        .doc(userName)
+        .collection('steps')
+        .get();
     var curGroup = await activitiesInstance
         .doc(code)
         .collection('members')
@@ -220,55 +239,95 @@ class DatabaseService {
         .get();
     int diff;
     String start;
+    String lastDate;
+    int diffExist;
+    int todaySteps = 0;
     try {
       start = group.data()['startDate'];
     } catch (e) {
       return setCompMemStep(code);
     }
+    try {
+      print(groupMem.docs.last.id + '  id');
+      lastDate = groupMem.docs.last.id;
+      diffExist = DateTime.parse(lastDate).difference(DateTime.now()).inDays;
+      todaySteps = groupMem.docs.last.data()['steps'];
+    } catch (e) {}
+    print(diffExist.toString() + ' ' + code);
+    var userStepsToday = await usersInstance
+        .doc(_auth.getCurrentUser())
+        .collection('steps')
+        .doc(DateFormat('yyyy-MM-dd').format(DateTime.now()))
+        .get();
+    int userStepsTod =
+        userStepsToday.data()['steps'] + userStepsToday.data()['addedSteps'];
+    print(userStepsTod);
+    print(todaySteps);
+    if (diffExist == null) {
+      await steps.then((snapshot) {
+        snapshot.docs.forEach((doc) async {
+          DateTime date = DateTime.parse(doc.id);
+          DateTime startDate = DateTime.parse(start);
 
-    await steps.then((snapshot) {
-      snapshot.docs.forEach((doc) async {
-        DateTime date = DateTime.parse(doc.id);
-        DateTime startDate = DateTime.parse(start);
+          diff = date.difference(startDate).inDays;
+          print(diff.toString() + ' ' + code);
+          if (diff >= 0) {
+            var alredyData;
+            try {
+              alredyData = curGroup.data()[doc.id];
+            } catch (e) {
+              alredyData = null;
+            }
 
-        diff = date.difference(startDate).inDays;
-        if (diff >= 0) {
-          var alredyData;
-          try {
-            alredyData = curGroup.data()[doc.id];
-          } catch (e) {
-            alredyData = null;
+            int uSteps =
+                (doc.data()['steps'] + doc.data()['addedSteps']).toInt();
+            print(alredyData.toString() + code);
+            if (alredyData == null) {
+              await activitiesInstance
+                  .doc(code)
+                  .collection('members')
+                  .doc(userName)
+                  .collection('steps')
+                  .doc(doc.id)
+                  .set({'steps': uSteps}).then(
+                      (value) => _setGroupSteps(code, uSteps));
+            }
           }
-
-          var uSteps = doc.data()['steps'] + doc.data()['addedSteps'];
-
-          if (alredyData == null) {
-            await activitiesInstance
-                .doc(code)
-                .collection('members')
-                .doc(userName)
-                .set({doc.id: doc.data()['steps'] + doc.data()['addedSteps']});
-            _setGroupSteps(
-                code, doc.data()['steps'] + doc.data()['addedSteps']);
-          } else if (alredyData < uSteps) {
-            await activitiesInstance
-                .doc(code)
-                .collection('members')
-                .doc(userName)
-                .update({doc.id: FieldValue.increment(uSteps - alredyData)});
-            _setGroupSteps(code, uSteps - alredyData);
-          }
-        }
+        });
       });
-    }).whenComplete(() {
-      if (diff == -1) {
-        activitiesInstance
+    } else if (diffExist < 0) {
+      for (; diffExist < 0; diffExist++) {
+        DateTime now = DateTime.now();
+        String date = DateFormat('yyyy-MM-dd')
+            .format(DateTime(now.year, now.month, now.day + (diffExist + 1)));
+        var userSteps = await usersInstance
+            .doc(_auth.getCurrentUser())
+            .collection('steps')
+            .doc(date)
+            .get();
+
+        await activitiesInstance
             .doc(code)
             .collection('members')
             .doc(userName)
-            .set({DateFormat('yyyy-MM-dd').format(DateTime.now()): 0});
+            .collection('steps')
+            .doc(date)
+            .set({
+          'steps': userSteps.data()['steps'] + userSteps.data()['addedSteps']
+        }).then((value) => _setGroupSteps(code,
+                userSteps.data()['steps'] + userSteps.data()['addedSteps']));
       }
-    });
+    } else if (diffExist == 0 && userStepsTod > todaySteps) {
+      activitiesInstance
+          .doc(code)
+          .collection('members')
+          .doc(userName)
+          .collection('steps')
+          .doc(DateFormat('yyyy-MM-dd').format(DateTime.now()))
+          .update({
+        'steps': FieldValue.increment(userStepsTod - todaySteps)
+      }).then((value) => _setGroupSteps(code, userStepsTod - todaySteps));
+    }
   }
 
   Future _setGroupSteps(String code, int val) async {
@@ -299,61 +358,105 @@ class DatabaseService {
 
   Future setCompMemStep(String code) async {
     String userName = await getUserName();
-
     var group = await activitiesCompInstance.doc(code).get();
+    var groupMem = await activitiesCompInstance
+        .doc(code)
+        .collection('members')
+        .doc(userName)
+        .collection('steps')
+        .get();
     var curGroup = await activitiesCompInstance
         .doc(code)
         .collection('members')
         .doc(userName)
         .get();
     int diff;
-    String start = group.data()['startDate'];
+    String start;
+    String lastDate;
+    int diffExist;
+    int todaySteps = 0;
+    try {
+      start = group.data()['startDate'];
+    } catch (e) {
+      return setCompMemStep(code);
+    }
+    try {
+      print(groupMem.docs.last.id + '  id');
+      lastDate = groupMem.docs.last.id;
+      diffExist = DateTime.parse(lastDate).difference(DateTime.now()).inDays;
+      todaySteps = groupMem.docs.last.data()['steps'];
+    } catch (e) {}
+    print(diffExist.toString() + ' ' + code);
+    var userStepsToday = await usersInstance
+        .doc(_auth.getCurrentUser())
+        .collection('steps')
+        .doc(DateFormat('yyyy-MM-dd').format(DateTime.now()))
+        .get();
+    int userStepsTod =
+        userStepsToday.data()['steps'] + userStepsToday.data()['addedSteps'];
+    print(userStepsTod);
+    print(todaySteps);
+    if (diffExist == null) {
+      await steps.then((snapshot) {
+        snapshot.docs.forEach((doc) async {
+          DateTime date = DateTime.parse(doc.id);
+          DateTime startDate = DateTime.parse(start);
 
-    await steps.then((snapshot) {
-      snapshot.docs.forEach((doc) async {
-        DateTime date = DateTime.parse(doc.id);
-        DateTime startDate = DateTime.parse(start);
+          diff = date.difference(startDate).inDays;
 
-        diff = date.difference(startDate).inDays;
-        print(diff);
-        if (diff >= 0) {
-          var alredyData;
-          try {
-            alredyData = curGroup.data()[doc.id];
-          } catch (e) {
-            alredyData = null;
+          if (diff >= 0) {
+            var alredyData;
+            try {
+              alredyData = curGroup.data()[doc.id];
+            } catch (e) {
+              alredyData = null;
+            }
+
+            int uSteps =
+                (doc.data()['steps'] + doc.data()['addedSteps']).toInt();
+            print(alredyData.toString() + code);
+            if (alredyData == null) {
+              await activitiesCompInstance
+                  .doc(code)
+                  .collection('members')
+                  .doc(userName)
+                  .collection('steps')
+                  .doc(doc.id)
+                  .set({'steps': uSteps});
+            }
           }
-
-          var uSteps = doc.data()['steps'] + doc.data()['addedSteps'];
-          print(alredyData);
-          if (alredyData == null) {
-            await activitiesCompInstance
-                .doc(code)
-                .collection('members')
-                .doc(userName)
-                .collection('steps')
-                .doc(doc.id)
-                .set({'steps': uSteps});
-          } else if (alredyData < uSteps) {
-            await activitiesCompInstance
-                .doc(code)
-                .collection('members')
-                .doc(userName)
-                .collection('steps')
-                .doc(doc.id)
-                .update({'steps': FieldValue.increment(uSteps - alredyData)});
-          }
-        }
+        });
       });
-    }).whenComplete(() {
-      if (diff == -1) {
-        activitiesInstance
+    } else if (diffExist < 0) {
+      for (; diffExist < 0; diffExist++) {
+        DateTime now = DateTime.now();
+        String date = DateFormat('yyyy-MM-dd')
+            .format(DateTime(now.year, now.month, now.day + (diffExist + 1)));
+        var userSteps = await usersInstance
+            .doc(_auth.getCurrentUser())
+            .collection('steps')
+            .doc(date)
+            .get();
+
+        await activitiesInstance
             .doc(code)
             .collection('members')
             .doc(userName)
-            .set({DateFormat('yyyy-MM-dd').format(DateTime.now()): 0});
+            .collection('steps')
+            .doc(date)
+            .set({
+          'steps': userSteps.data()['steps'] + userSteps.data()['addedSteps']
+        });
       }
-    });
+    } else if (diffExist == 0 && userStepsTod > todaySteps) {
+      activitiesInstance
+          .doc(code)
+          .collection('members')
+          .doc(userName)
+          .collection('steps')
+          .doc(DateFormat('yyyy-MM-dd').format(DateTime.now()))
+          .update({'steps': FieldValue.increment(userStepsTod - todaySteps)});
+    }
   }
 
   Future<String> getUserName() async {
@@ -383,7 +486,6 @@ class DatabaseService {
       String date = DateFormat('yyyy-MM-dd')
           .format(DateTime.now().subtract(Duration(days: i)));
       if (i == 0) {
-        randNum = 0;
         isLastAddedData = true;
       }
 
@@ -497,5 +599,9 @@ class DatabaseService {
     final ref = FirebaseStorage.instance.ref().child(imgName);
     String url = await ref.getDownloadURL();
     return url;
+  }
+
+  Future<QuerySnapshot> userStepsToday(String code) {
+    return activitiesInstance.doc(code).collection('members').get();
   }
 }

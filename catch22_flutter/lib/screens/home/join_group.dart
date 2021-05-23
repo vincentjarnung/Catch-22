@@ -104,12 +104,13 @@ class _JoinGroupState extends State<JoinGroup> {
                         if (aName != null) {
                           print(code);
                           if (isComp) {
+                            print(isComp);
                             _db
                                 .setCompMem(code)
                                 .whenComplete(() => _db.joinActivity(code))
                                 .whenComplete(() => _showAlertDialog(context));
                           } else {
-                            _db.setMemStep(aName).whenComplete(() => _db
+                            _db.setMem(code).whenComplete(() => _db
                                 .joinActivity(code)
                                 .whenComplete(() => _showAlertDialog(context)));
                           }

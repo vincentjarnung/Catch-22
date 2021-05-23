@@ -25,21 +25,26 @@ class StepsChart extends StatelessWidget {
     return charts.BarChart(
       series,
       animate: true,
-      /*behaviors: [
+      behaviors: [
         LinePointHighlighter(symbolRenderer: CustomCircleSymbolRenderer())
       ],
       selectionModels: [
         SelectionModelConfig(changedListener: (SelectionModel model) {
-          if (model.hasDatumSelection)
+          if (model.hasDatumSelection) {
+            final value =
+                model.selectedSeries[0].measureFn(model.selectedDatum[0].index);
+            CustomCircleSymbolRenderer.value = value.toInt().toString();
             print(model.selectedSeries[0]
                 .measureFn(model.selectedDatum[0].index));
+          }
         })
-      ],*/
+      ],
     );
   }
 }
 
 class CustomCircleSymbolRenderer extends CircleSymbolRenderer {
+  static String value;
   @override
   void paint(ChartCanvas canvas, Rectangle<num> bounds,
       {List<int> dashPattern,
@@ -54,13 +59,13 @@ class CustomCircleSymbolRenderer extends CircleSymbolRenderer {
         strokeColor: strokeColor,
         strokeWidthPx: strokeWidthPx);
     canvas.drawRect(
-        Rectangle(bounds.left - 5, bounds.top - 30, bounds.width + 10,
+        Rectangle(bounds.left - 5, bounds.top - 30, bounds.width + 38,
             bounds.height + 10),
-        fill: Color.white);
+        fill: Color.fromHex(code: '#F6D863'));
     var textStyle = style.TextStyle();
     textStyle.color = Color.black;
     textStyle.fontSize = 15;
-    canvas.drawText(styletext.TextElement("100", style: textStyle),
+    canvas.drawText(styletext.TextElement("$value", style: textStyle),
         (bounds.left).round(), (bounds.top - 28).round());
   }
 }

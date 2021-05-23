@@ -2,8 +2,10 @@ import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/button_widget.dart';
 import 'package:catch22_flutter/shared/constants/color_constants.dart';
+import 'package:catch22_flutter/shared/leave_group_popup.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class ActivityCompView extends StatefulWidget {
@@ -21,6 +23,8 @@ class _ActivityCompViewState extends State<ActivityCompView> {
   List<StepsDayModel> _allTimeList = [];
   List<String> _users = [];
   bool _ended = false;
+  StateSetter _setter;
+  Icon _copy;
 
   String _firstPlace = '-';
   String _secoundPlace = '-';
@@ -99,16 +103,68 @@ class _ActivityCompViewState extends State<ActivityCompView> {
   void _onSelected(BuildContext context, int item) {
     switch (item) {
       case 0:
-        _db.leaveCompGroup(widget.code);
-        Navigator.pop(context);
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                content: StatefulBuilder(builder: (context, setState) {
+                  _setter = setState;
+                  return SingleChildScrollView(
+                      child: Column(
+                    children: [
+                      Text(
+                        'Copy code to clipboard',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SelectableText(
+                            widget.code,
+                            style: TextStyle(fontSize: 18),
+                          ),
+                          SizedBox(width: 10),
+                          IconButton(
+                              icon: _copy,
+                              onPressed: () {
+                                _setter(() {
+                                  _copy = Icon(
+                                    Icons.copy,
+                                    color: ColorConstants.kPrimaryColor,
+                                  );
+                                });
+                                Clipboard.setData(ClipboardData(
+                                  text: widget.code,
+                                ));
+                              })
+                        ],
+                      ),
+                    ],
+                  ));
+                }),
+              );
+            });
         break;
       case 1:
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return LeaveGroupPopup(
+                code: widget.code,
+                comp: true,
+              );
+            });
         break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    _copy = Icon(Icons.copy);
     double heightOfScreen = MediaQuery.of(context).size.height;
     double widthOfScreen = MediaQuery.of(context).size.width;
     TextStyle header = TextStyle(fontSize: 24, fontWeight: FontWeight.bold);

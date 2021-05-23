@@ -11,6 +11,7 @@ import 'package:catch22_flutter/shared/change_date_widget.dart';
 import 'package:catch22_flutter/shared/change_week_widget.dart';
 import 'package:catch22_flutter/shared/constants/color_constants.dart';
 import 'package:catch22_flutter/shared/img_button_widget.dart';
+import 'package:catch22_flutter/shared/log_out_popup.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:pedometer/pedometer.dart';
@@ -130,15 +131,19 @@ class _HomeState extends State<Home> {
   }*/
 
   Future _getStepsD() async {
-    return await _db.getDateAndSteps().then((snapshot) => setState(() {
-          print('first');
-          tester = snapshot;
+    try {
+      return await _db.getDateAndSteps().then((snapshot) => setState(() {
+            print('first');
+            tester = snapshot;
 
-          for (int i = 0; i < tester.length; i++) {
-            print(tester[i].steps);
-            print(tester[i].date);
-          }
-        }));
+            for (int i = 0; i < tester.length; i++) {
+              print(tester[i].steps);
+              print(tester[i].date);
+            }
+          }));
+    } catch (e) {
+      tester = [];
+    }
   }
 
   void initState() {
@@ -263,8 +268,11 @@ class _HomeState extends State<Home> {
             });
         break;
       case 1:
-        _auth.signOut().whenComplete(() => Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (context) => Wrapper())));
+        showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              return LogOutPopup();
+            });
         break;
     }
   }

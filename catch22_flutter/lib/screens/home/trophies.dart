@@ -17,7 +17,6 @@ class _TrophiesState extends State<Trophies> {
   void initState() {
     super.initState();
     if (!mounted) return;
-
     _getAsas();
   }
 
@@ -39,7 +38,7 @@ class _TrophiesState extends State<Trophies> {
             isOwned = true;
             date = val;
           }
-          print(doc['ref']);
+
           return GridListItem(
             imgRef: doc['ref'],
             owned: isOwned,

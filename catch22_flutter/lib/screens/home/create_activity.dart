@@ -6,6 +6,7 @@ import 'package:catch22_flutter/shared/change_date_widget.dart';
 import 'package:catch22_flutter/shared/constants/color_constants.dart';
 import 'package:catch22_flutter/shared/form_textfield_widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_date_pickers/flutter_date_pickers.dart' as dp;
 import 'package:catch22_flutter/shared/img_button_widget.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +17,8 @@ class SelectActivity extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     AppBar appBar = AppBar(
-      title: Text('Select Activity Type'),
+      title: Text('Select Group Type'),
+      centerTitle: true,
     );
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height -
@@ -30,7 +32,7 @@ class SelectActivity extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(60, 40, 60, 20),
               child: Text(
-                'Create a Goal Activity to collaborate with your friends to reach a common goal!',
+                'Create a Goal Group to collaborate with your friends to reach a common goal!',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
@@ -42,7 +44,7 @@ class SelectActivity extends StatelessWidget {
             ImageButtonWidget(
               width: width - 70,
               icon: Icon(Icons.add),
-              text: 'Create a Goal Activity',
+              text: 'Create a Goal Group',
               onClick: () {
                 Navigator.push(context,
                     MaterialPageRoute(builder: (context) => GoalActivity()));
@@ -58,7 +60,7 @@ class SelectActivity extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(60, 10, 60, 20),
               child: Text(
-                'Create a Competition Activity to see your freinds data and compete against them!',
+                'Create a Competition Group to see your freinds data and compete against them!',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
@@ -73,7 +75,7 @@ class SelectActivity extends StatelessWidget {
             ImageButtonWidget(
               width: width - 70,
               icon: Icon(Icons.add),
-              text: 'Create a Competition Activity',
+              text: 'Create a Competition Group',
               onClick: () {
                 Navigator.push(
                     context,
@@ -107,6 +109,8 @@ class _GoalActivityState extends State<GoalActivity> {
   DateTime _selectedDate = DateTime.now();
   Color selectedDateStyleColor = Colors.black;
   Color selectedSingleDateDecorationColor = ColorConstants.kPrimaryColor;
+  Icon _copy;
+  StateSetter _setter;
 
   static const _chars =
       'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
@@ -124,6 +128,7 @@ class _GoalActivityState extends State<GoalActivity> {
 
   @override
   Widget build(BuildContext context) {
+    _copy = Icon(Icons.copy);
     dp.DatePickerRangeStyles styles = dp.DatePickerRangeStyles(
       selectedDateStyle: Theme.of(context)
           .accentTextTheme
@@ -134,7 +139,7 @@ class _GoalActivityState extends State<GoalActivity> {
     );
     return Scaffold(
       appBar: AppBar(
-        title: Text('Goal Activity'),
+        title: Text('Goal Group'),
         centerTitle: true,
       ),
       body: GestureDetector(
@@ -151,7 +156,7 @@ class _GoalActivityState extends State<GoalActivity> {
                   isEmail: false,
                   isLast: true,
                   obscureText: false,
-                  hintText: 'Name Activity',
+                  hintText: 'Name Group',
                   onChanged: (val) {
                     actName = val;
                   },
@@ -187,7 +192,7 @@ class _GoalActivityState extends State<GoalActivity> {
               Padding(
                 padding: const EdgeInsets.all(30.0),
                 child: Text(
-                  'Select an end date for the Activity',
+                  'Select an end date for the Group',
                   style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -215,7 +220,7 @@ class _GoalActivityState extends State<GoalActivity> {
               ),
               ImageButtonWidget(
                 icon: Icon(Icons.add),
-                text: 'Create Activity',
+                text: 'Create Group',
                 width: 200,
                 onClick: () {
                   if (DateFormat('yyyy-MM-dd').format(_selectedDate) ==
@@ -226,7 +231,7 @@ class _GoalActivityState extends State<GoalActivity> {
                   }
                   if (actName == null || actName == '') {
                     setState(() {
-                      error = 'Enter a valid activity name';
+                      error = 'Enter a valid group name';
                     });
                   }
                   if (!(actName == null || actName == '') &&
@@ -250,53 +255,70 @@ class _GoalActivityState extends State<GoalActivity> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            content: Container(
-              width: 200,
-              height: 175,
-              child: Column(
-                children: [
-                  Text(
-                    'Congratulations, you have created a new activity. Here is the code for inviting others to the activity:',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Text(
-                    code,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  ButtonWidget(
-                    text: 'Continue',
-                    hasBorder: false,
-                    height: 30,
-                    width: 120,
-                    onClick: () async {
-                      print(DateFormat('yyyy-MM-dd').format(_selectedDate));
-                      print(stepGoal);
-                      print(actName);
+            content: StatefulBuilder(builder: (context, setState) {
+              _setter = setState;
+              return SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Text(
+                      'Congratulations, you have created a new group. Here is the code for inviting others to the group:',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SelectableText(
+                          code,
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        SizedBox(width: 10),
+                        IconButton(
+                            icon: _copy,
+                            onPressed: () {
+                              _setter(() {
+                                _copy = Icon(
+                                  Icons.copy,
+                                  color: ColorConstants.kPrimaryColor,
+                                );
+                              });
+                              Clipboard.setData(ClipboardData(text: code));
+                            })
+                      ],
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    ButtonWidget(
+                      text: 'Continue',
+                      hasBorder: false,
+                      height: 30,
+                      width: 120,
+                      onClick: () async {
+                        print(DateFormat('yyyy-MM-dd').format(_selectedDate));
+                        print(stepGoal);
+                        print(actName);
 
-                      _db
-                          .newActivity(
-                              actName,
-                              stepGoal,
-                              DateFormat('yyyy-MM-dd').format(_selectedDate),
-                              code)
-                          .whenComplete(() => _db.joinActivity(code));
+                        _db
+                            .newActivity(
+                                actName,
+                                stepGoal,
+                                DateFormat('yyyy-MM-dd').format(_selectedDate),
+                                code)
+                            .whenComplete(() => _db.joinActivity(code));
 
-                      Navigator.pop(context);
-                      Navigator.pop(context);
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
-              ),
-            ),
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }),
           );
         });
   }
@@ -327,6 +349,8 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
   DateTime _firstDate = DateTime.now();
   DateTime _lastDate = DateTime.now().add(Duration(days: 350));
   DateTime _selectedDate = DateTime.now();
+  StateSetter _setter;
+  Icon _copy;
   Color selectedDateStyleColor = Colors.black;
   Color selectedSingleDateDecorationColor = ColorConstants.kPrimaryColor;
 
@@ -346,6 +370,7 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
 
   @override
   Widget build(BuildContext context) {
+    _copy = Icon(Icons.copy);
     dp.DatePickerRangeStyles styles = dp.DatePickerRangeStyles(
       selectedDateStyle: Theme.of(context)
           .accentTextTheme
@@ -356,7 +381,7 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
     );
     return Scaffold(
       appBar: AppBar(
-        title: Text('Competition Activity'),
+        title: Text('Competition Group'),
         centerTitle: true,
       ),
       body: GestureDetector(
@@ -370,7 +395,7 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
               Padding(
                 padding: const EdgeInsets.all(30.0),
                 child: Text(
-                  'Name Your activity',
+                  'Name Your group',
                   style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -384,7 +409,7 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
                   isEmail: false,
                   isLast: true,
                   obscureText: false,
-                  hintText: 'Name Activity',
+                  hintText: 'Name Group',
                   onChanged: (val) {
                     actName = val;
                   },
@@ -397,7 +422,7 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
               Padding(
                 padding: const EdgeInsets.all(30.0),
                 child: Text(
-                  'Select an end date for the Activity',
+                  'Select an end date for the Group',
                   style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -425,7 +450,7 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
               ),
               ImageButtonWidget(
                 icon: Icon(Icons.add),
-                text: 'Create Activity',
+                text: 'Create Group',
                 width: 200,
                 onClick: () {
                   if (DateFormat('yyyy-MM-dd').format(_selectedDate) ==
@@ -436,7 +461,7 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
                   }
                   if (actName == null || actName == '') {
                     setState(() {
-                      error = 'Enter a valid activity name';
+                      error = 'Enter a valid group name';
                     });
                   }
                   if (!(actName == null || actName == '') &&
@@ -460,52 +485,69 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            content: Container(
-              width: 200,
-              height: 175,
-              child: Column(
-                children: [
-                  Text(
-                    'Congratulations, you have created a new activity. Here is the code for inviting others to the activity:',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  Text(
-                    code,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18),
-                  ),
-                  SizedBox(
-                    height: 20,
-                  ),
-                  ButtonWidget(
-                    text: 'Continue',
-                    hasBorder: false,
-                    height: 30,
-                    width: 120,
-                    onClick: () async {
-                      print(DateFormat('yyyy-MM-dd').format(_selectedDate));
-                      print(stepGoal);
-                      print(actName);
+            content: StatefulBuilder(builder: (context, setState) {
+              _setter = setState;
+              return SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Text(
+                      'Congratulations, you have created a new group. Here is the code for inviting others to the group:',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 18),
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SelectableText(
+                          code,
+                          style: TextStyle(fontSize: 18),
+                        ),
+                        SizedBox(width: 10),
+                        IconButton(
+                            icon: _copy,
+                            onPressed: () {
+                              _setter(() {
+                                _copy = Icon(
+                                  Icons.copy,
+                                  color: ColorConstants.kPrimaryColor,
+                                );
+                              });
+                              Clipboard.setData(ClipboardData(text: code));
+                            })
+                      ],
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    ButtonWidget(
+                      text: 'Continue',
+                      hasBorder: false,
+                      height: 30,
+                      width: 120,
+                      onClick: () async {
+                        print(DateFormat('yyyy-MM-dd').format(_selectedDate));
+                        print(stepGoal);
+                        print(actName);
 
-                      _db
-                          .newCompActivity(
-                              actName,
-                              DateFormat('yyyy-MM-dd').format(_selectedDate),
-                              code)
-                          .whenComplete(() => _db.joinActivity(code));
+                        _db
+                            .newCompActivity(
+                                actName,
+                                DateFormat('yyyy-MM-dd').format(_selectedDate),
+                                code)
+                            .whenComplete(() => _db.joinActivity(code));
 
-                      Navigator.pop(context);
-                      Navigator.pop(context);
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
-              ),
-            ),
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }),
           );
         });
   }
