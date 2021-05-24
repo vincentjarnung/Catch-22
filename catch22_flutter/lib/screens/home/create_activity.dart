@@ -61,7 +61,7 @@ class SelectActivity extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(60, 10, 60, 20),
               child: Text(
-                'Create a Competition Group to see your freinds data and compete against them!',
+                'Create a Challenge Group to see your freinds data and compete against them!',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
@@ -76,7 +76,7 @@ class SelectActivity extends StatelessWidget {
             ImageButtonWidget(
               width: width - 70,
               icon: Icon(Icons.add),
-              text: 'Create a Competition Group',
+              text: 'Create a Challenge Group',
               onClick: () {
                 Navigator.push(
                     context,
@@ -396,7 +396,7 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
     );
     return Scaffold(
       appBar: AppBar(
-        title: Text('Competition Group'),
+        title: Text('Challenge Group'),
         centerTitle: true,
       ),
       body: GestureDetector(

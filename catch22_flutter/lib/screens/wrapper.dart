@@ -4,6 +4,7 @@ import 'package:catch22_flutter/screens/authenticate/set_step_goal.dart';
 import 'package:catch22_flutter/screens/home/bottom_navigation_bar.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +16,12 @@ class Wrapper extends StatefulWidget {
 }
 
 class _WrapperState extends State<Wrapper> {
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<SimpleUser>(context);

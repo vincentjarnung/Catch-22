@@ -76,7 +76,7 @@ class _ActivityWidgetState extends State<ActivityWidget> {
                         code: widget.code,
                         daysLeft: _daysLeft,
                       )));
-        } else if (goal == 'Competition') {
+        } else if (goal == 'Challenge') {
           Navigator.push(
               context,
               MaterialPageRoute(

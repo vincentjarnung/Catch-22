@@ -212,7 +212,7 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                     child: Image.asset('assets/images/goalCompleted.png'),
                   ),
                   Text(
-                    'Challange Completed',
+                    'Challenge Completed',
                     style: header,
                   ),
                   SizedBox(

@@ -200,7 +200,7 @@ class DatabaseService {
       return 'Goal';
     } catch (e) {
       test = groupComp.data()['groupName'];
-      return 'Competition';
+      return 'Challenge';
     }
   }
 
