@@ -133,13 +133,7 @@ class _HomeState extends State<Home> {
   Future _getStepsD() async {
     try {
       return await _db.getDateAndSteps().then((snapshot) => setState(() {
-            print('first');
             tester = snapshot;
-
-            for (int i = 0; i < tester.length; i++) {
-              print(tester[i].steps);
-              print(tester[i].date);
-            }
           }));
     } catch (e) {
       tester = [];

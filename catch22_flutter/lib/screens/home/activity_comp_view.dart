@@ -2,11 +2,13 @@ import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:catch22_flutter/services/database.dart';
 import 'package:catch22_flutter/shared/button_widget.dart';
 import 'package:catch22_flutter/shared/constants/color_constants.dart';
+import 'package:catch22_flutter/shared/img_button_widget.dart';
 import 'package:catch22_flutter/shared/leave_group_popup.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:share/share.dart';
 
 class ActivityCompView extends StatefulWidget {
   final String code;
@@ -113,12 +115,12 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                       child: Column(
                     children: [
                       Text(
-                        'Copy code to clipboard',
+                        'Share Code',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       SizedBox(
-                        height: 20,
+                        height: 10,
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -142,6 +144,18 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                                 ));
                               })
                         ],
+                      ),
+                      ImageButtonWidget(
+                        width: 160,
+                        height: 30,
+                        icon: Icon(Icons.share),
+                        text: "Share Code",
+                        onClick: () {
+                          Share.share(widget.code);
+                        },
+                      ),
+                      SizedBox(
+                        height: 10,
                       ),
                     ],
                   ));

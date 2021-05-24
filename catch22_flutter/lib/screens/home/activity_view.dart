@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:share/share.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
 
 class ActivityView extends StatefulWidget {
@@ -67,12 +68,12 @@ class _ActivityViewState extends State<ActivityView> {
                       child: Column(
                     children: [
                       Text(
-                        'Copy code to clipboard',
+                        'Share Code',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       SizedBox(
-                        height: 20,
+                        height: 10,
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -95,6 +96,18 @@ class _ActivityViewState extends State<ActivityView> {
                                     ClipboardData(text: widget.code));
                               })
                         ],
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      ImageButtonWidget(
+                        width: 160,
+                        height: 30,
+                        icon: Icon(Icons.share),
+                        text: "Share Code",
+                        onClick: () {
+                          Share.share(widget.code);
+                        },
                       ),
                     ],
                   ));

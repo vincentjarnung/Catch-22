@@ -11,6 +11,7 @@ import 'package:flutter_date_pickers/flutter_date_pickers.dart' as dp;
 import 'package:catch22_flutter/shared/img_button_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:share/share.dart';
 import 'dart:math';
 
 class SelectActivity extends StatelessWidget {
@@ -290,7 +291,19 @@ class _GoalActivityState extends State<GoalActivity> {
                       ],
                     ),
                     SizedBox(
-                      height: 20,
+                      height: 10,
+                    ),
+                    ImageButtonWidget(
+                      width: 160,
+                      height: 30,
+                      icon: Icon(Icons.share),
+                      text: "Share Code",
+                      onClick: () {
+                        Share.share(code);
+                      },
+                    ),
+                    SizedBox(
+                      height: 10,
                     ),
                     ButtonWidget(
                       text: 'Continue',
@@ -520,7 +533,19 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
                       ],
                     ),
                     SizedBox(
-                      height: 20,
+                      height: 10,
+                    ),
+                    ImageButtonWidget(
+                      width: 160,
+                      height: 30,
+                      icon: Icon(Icons.share),
+                      text: "Share Code",
+                      onClick: () {
+                        Share.share(code);
+                      },
+                    ),
+                    SizedBox(
+                      height: 10,
                     ),
                     ButtonWidget(
                       text: 'Continue',
