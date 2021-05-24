@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.catch22_flutter">
    <application
+        android:name=".Application"
         android:label="catch22_flutter"
         android:icon="@mipmap/ic_launcher">
         <activity

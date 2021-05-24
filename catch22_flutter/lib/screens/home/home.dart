@@ -13,6 +13,7 @@ import 'package:catch22_flutter/shared/constants/color_constants.dart';
 import 'package:catch22_flutter/shared/img_button_widget.dart';
 import 'package:catch22_flutter/shared/log_out_popup.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -142,7 +143,6 @@ class _HomeState extends State<Home> {
 
   void initState() {
     super.initState();
-    if (!mounted) return;
 
     _getStepsD().whenComplete(() {
       _getSteps(DateTime.now());
@@ -354,7 +354,7 @@ class _HomeState extends State<Home> {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(left: 20),
-                        child: Text('Steps',
+                        child: Text('Todays Steps',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 20)),
                       )

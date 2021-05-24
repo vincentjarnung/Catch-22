@@ -80,12 +80,14 @@ class DatabaseService {
     });
   }
 
-  Future newUserData(String userName, String email, String uid) async {
+  Future newUserData(
+      String userName, String email, String uid, String token) async {
     return await usersInstance.doc(uid).set({
       'userName': userName,
       'email': email,
       'stepGoal': 5000,
-      'activities': []
+      'activities': [],
+      'token': token
     });
   }
 

@@ -49,7 +49,6 @@ class _ActivityCompViewState extends State<ActivityCompView> {
   Future _members() async {
     var data = _db.viewCompActivity(widget.code);
     await data.then((value) => value.docs.forEach((doc) async {
-          print(doc.id);
           await _getTodayScore(doc.id).whenComplete(() => setState(() {
                 _todayList.sort((a, b) {
                   return b.steps.compareTo(a.steps);
@@ -61,25 +60,24 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                   return b.steps.compareTo(a.steps);
                 });
 
-                for (int i = 0; i < _allTimeList.length; i++) {
-                  print(_allTimeList[i].steps);
-                }
-
-                if (widget.daysLeft <= 0) {
-                  _ended = true;
-
+                try {
+                  _users = [];
                   for (int i = 0; i < _todayList.length; i++) {
                     _users.add(_todayList[i].date);
                   }
-                  try {
-                    _firstPlace = _users[0];
-                  } catch (e) {}
-                  try {
-                    _secoundPlace = _users[1];
-                  } catch (e) {}
-                  try {
-                    _thirdPlace = _users[2];
-                  } catch (e) {}
+                } catch (e) {}
+                try {
+                  _firstPlace = _users[0];
+                } catch (e) {}
+                try {
+                  _secoundPlace = _users[1];
+                } catch (e) {}
+                try {
+                  _thirdPlace = _users[2];
+                } catch (e) {}
+
+                if (widget.daysLeft <= 0) {
+                  _ended = true;
                 }
               }));
         }));
@@ -151,7 +149,9 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                         icon: Icon(Icons.share),
                         text: "Share Code",
                         onClick: () {
-                          Share.share(widget.code);
+                          Share.share(
+                              'Join my group on catch-22, here is the code: \n' +
+                                  widget.code);
                         },
                       ),
                       SizedBox(
@@ -194,6 +194,10 @@ class _ActivityCompViewState extends State<ActivityCompView> {
               itemBuilder: (context) => [
                     PopupMenuItem<int>(
                       value: 0,
+                      child: Text('View Code'),
+                    ),
+                    PopupMenuItem<int>(
+                      value: 1,
                       child: Text('Leave Group'),
                     ),
                   ])
@@ -226,7 +230,7 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                           ),
                           Container(
                             width: 100,
-                            height: 40,
+                            height: 60,
                             color: ColorConstants.kyellow,
                             child: Center(
                                 child: Text(
@@ -268,7 +272,7 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                           ),
                           Container(
                             width: 100,
-                            height: 60,
+                            height: 40,
                             color: ColorConstants.kyellow,
                             child: Center(
                                 child: Text(
@@ -341,69 +345,208 @@ class _ActivityCompViewState extends State<ActivityCompView> {
                     SizedBox(
                       height: 20,
                     ),
-                    Text('Today', style: header),
-                    Container(
-                      width: widthOfScreen * 0.9,
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: ColorConstants.kyellow),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _todayList.length,
-                        itemBuilder: (context, index) {
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(_todayList[index].date, style: item),
-                                  Text(
-                                      _todayList[index]
-                                          .steps
-                                          .toInt()
-                                          .toString(),
-                                      style: itemVal)
-                                ],
-                              ),
+                    Text('Leaderboard', style: header),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Column(
+                          children: [
+                            Text(
+                              _secoundPlace,
+                              style: item,
                             ),
-                          );
-                        },
-                      ),
+                            Container(
+                              width: 100,
+                              height: 60,
+                              color: ColorConstants.kyellow,
+                              child: Center(
+                                  child: _allTimeList.length > 1
+                                      ? Text(
+                                          _allTimeList[1]
+                                              .steps
+                                              .toInt()
+                                              .toString(),
+                                          style: header,
+                                        )
+                                      : Text(
+                                          '-',
+                                          style: header,
+                                        )),
+                            )
+                          ],
+                        ),
+                        SizedBox(
+                          width: 20,
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              _firstPlace,
+                              style: item,
+                            ),
+                            Container(
+                              width: 100,
+                              height: 80,
+                              color: ColorConstants.kyellow,
+                              child: Center(
+                                  child: _allTimeList.length > 0
+                                      ? Text(
+                                          _allTimeList[0]
+                                              .steps
+                                              .toInt()
+                                              .toString(),
+                                          style: header,
+                                        )
+                                      : Text(
+                                          '-',
+                                          style: header,
+                                        )),
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          width: 20,
+                        ),
+                        Column(
+                          children: [
+                            Text(
+                              _thirdPlace,
+                              style: item,
+                            ),
+                            Container(
+                              width: 100,
+                              height: 40,
+                              color: ColorConstants.kyellow,
+                              child: Center(
+                                  child: _allTimeList.length > 2
+                                      ? Text(
+                                          _allTimeList[2]
+                                              .steps
+                                              .toInt()
+                                              .toString(),
+                                          style: header,
+                                        )
+                                      : Text(
+                                          '-',
+                                          style: header,
+                                        )),
+                            )
+                          ],
+                        ),
+                      ],
                     ),
                     SizedBox(
                       height: 20,
                     ),
-                    Text('Leaderboard', style: header),
+                    Divider(
+                      indent: widthOfScreen * 0.05,
+                      endIndent: widthOfScreen * 0.05,
+                      thickness: 1,
+                      color: Colors.black,
+                    ),
                     Container(
                       width: widthOfScreen * 0.9,
                       decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: ColorConstants.kyellow),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: _allTimeList.length > 3
+                          ? ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: _todayList.length - 3,
+                              itemBuilder: (context, index) {
+                                return Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20.0),
+                                    child: Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            _allTimeList.length == 0
+                                                ? Text('-')
+                                                : Row(
+                                                    children: [
+                                                      Text(
+                                                        (index + 4).toString() +
+                                                            '   ',
+                                                        style: header,
+                                                      ),
+                                                      Text(
+                                                          _allTimeList[
+                                                                  index + 3]
+                                                              .date,
+                                                          style: item),
+                                                    ],
+                                                  ),
+                                            _allTimeList.length == 0
+                                                ? Text('-')
+                                                : Text(
+                                                    _allTimeList[index + 3]
+                                                        .steps
+                                                        .toInt()
+                                                        .toString(),
+                                                    style: itemVal)
+                                          ],
+                                        ),
+                                        Divider(
+                                          thickness: 1,
+                                          color: Colors.black,
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            )
+                          : Container(),
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Text('Today', style: header),
+                    Container(
+                      width: widthOfScreen * 0.9,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: ListView.builder(
                         shrinkWrap: true,
                         itemCount: _todayList.length,
                         itemBuilder: (context, index) {
                           return Center(
                             child: Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                              padding: const EdgeInsets.all(5.0),
+                              child: Column(
                                 children: [
-                                  _allTimeList.length == 0
-                                      ? Text('-')
-                                      : Text(_allTimeList[index].date,
-                                          style: item),
-                                  _allTimeList.length == 0
-                                      ? Text('-')
-                                      : Text(
-                                          _allTimeList[index]
-                                              .steps
-                                              .toInt()
-                                              .toString(),
-                                          style: itemVal)
+                                  Padding(
+                                    padding: const EdgeInsets.all(10.0),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(_todayList[index].date,
+                                            style: item),
+                                        Text(
+                                            _todayList[index]
+                                                .steps
+                                                .toInt()
+                                                .toString(),
+                                            style: itemVal)
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    height: 10,
+                                  ),
+                                  Divider(
+                                    thickness: 1,
+                                    color: Colors.black,
+                                  )
                                 ],
                               ),
                             ),

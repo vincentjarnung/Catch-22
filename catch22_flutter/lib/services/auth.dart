@@ -1,6 +1,7 @@
 import 'package:catch22_flutter/models/simple_user.dart';
 import 'package:catch22_flutter/models/steps_day.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'database.dart';
 
 class AuthService {
@@ -40,8 +41,9 @@ class AuthService {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
       User user = userCredential.user;
+      String token = await FirebaseMessaging.instance.getToken();
 
-      await DatabaseService().newUserData(userName, email, user.uid);
+      await DatabaseService().newUserData(userName, email, user.uid, token);
 
       return (_userFromFirebaseUser(user));
     } catch (e) {

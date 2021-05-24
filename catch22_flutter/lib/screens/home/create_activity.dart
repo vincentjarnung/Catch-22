@@ -299,7 +299,9 @@ class _GoalActivityState extends State<GoalActivity> {
                       icon: Icon(Icons.share),
                       text: "Share Code",
                       onClick: () {
-                        Share.share(code);
+                        Share.share(
+                            'Join my group on catch-22, here is the code: \n' +
+                                code);
                       },
                     ),
                     SizedBox(
@@ -541,7 +543,9 @@ class _CompetitionActivityState extends State<CompetitionActivity> {
                       icon: Icon(Icons.share),
                       text: "Share Code",
                       onClick: () {
-                        Share.share(code);
+                        Share.share(
+                            'Join my group on catch-22, here is the code: \n' +
+                                code);
                       },
                     ),
                     SizedBox(

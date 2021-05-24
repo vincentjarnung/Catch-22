@@ -106,7 +106,9 @@ class _ActivityViewState extends State<ActivityView> {
                         icon: Icon(Icons.share),
                         text: "Share Code",
                         onClick: () {
-                          Share.share(widget.code);
+                          Share.share(
+                              'Join my group on catch-22, here is the code: \n' +
+                                  widget.code);
                         },
                       ),
                     ],

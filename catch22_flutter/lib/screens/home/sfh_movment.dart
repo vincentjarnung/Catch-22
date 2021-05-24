@@ -7,6 +7,7 @@ class SFHMovment extends StatelessWidget {
         appBar: AppBar(
           title: Text('SFH Movement'),
           centerTitle: true,
+          leading: Container(),
         ),
         body: Padding(
           padding: const EdgeInsets.all(9.0),
