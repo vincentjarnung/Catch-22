@@ -60,15 +60,27 @@ class _SetStepGoalState extends State<SetStepGoal> {
             style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(50, 50, 50, 30),
-            child: Text(
-              'Your average step count everyday for the last month was ' +
-                  avgValue.toString() +
-                  '! What would you like your daily step goal to be?',
-              style: TextStyle(fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
-          ),
+              padding: const EdgeInsets.fromLTRB(50, 50, 50, 30),
+              child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(children: [
+                    TextSpan(
+                      text:
+                          'Your average step count everyday for the last month was ',
+                      style: TextStyle(fontSize: 18, color: Colors.black),
+                    ),
+                    TextSpan(
+                      text: avgValue.toString(),
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black),
+                    ),
+                    TextSpan(
+                      text: '. What would you like your daily goal to be?',
+                      style: TextStyle(fontSize: 18, color: Colors.black),
+                    )
+                  ]))),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             mainAxisAlignment: MainAxisAlignment.start,
